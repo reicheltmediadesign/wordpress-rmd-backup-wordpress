@@ -1,0 +1,604 @@
+# German translation of RMD Backup WordPress.
+msgid ""
+msgstr ""
+"Project-Id-Version: RMD Backup WordPress 0.1.0\n"
+"Report-Msgid-Bugs-To: https://github.com/reicheltmediadesign/wordpress-rmd-backup-wordpress/issues\n"
+"Language: de_DE\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Domain: rmd-backup-wordpress\n"
+
+msgid "RMD Backup WordPress requires PHP %1$s or newer. This site runs PHP %2$s, so the plugin stays inactive."
+msgstr "RMD Backup WordPress benötigt PHP %1$s oder neuer. Diese Website läuft mit PHP %2$s, daher bleibt das Plugin inaktiv."
+
+msgid "Backups"
+msgstr "Backups"
+
+msgid "Cancel the running backup?"
+msgstr "Laufendes Backup abbrechen?"
+
+msgid "Delete this permanently?"
+msgstr "Endgültig löschen?"
+
+msgid "Starting backup …"
+msgstr "Backup wird gestartet …"
+
+msgid "The request failed:"
+msgstr "Die Anfrage ist fehlgeschlagen:"
+
+msgid "Continue"
+msgstr "Fortsetzen"
+
+msgid "Cancel backup"
+msgstr "Backup abbrechen"
+
+msgid "The backup stops after the current step …"
+msgstr "Das Backup stoppt nach dem aktuellen Schritt …"
+
+msgid "Close"
+msgstr "Schließen"
+
+msgid "View log"
+msgstr "Log ansehen"
+
+msgid "Warnings"
+msgstr "Warnungen"
+
+msgid "You can leave this page; the backup continues in the background."
+msgstr "Du kannst diese Seite verlassen, das Backup läuft im Hintergrund weiter."
+
+msgid "Backup finished."
+msgstr "Backup abgeschlossen."
+
+msgid "Backup finished with warnings."
+msgstr "Backup mit Warnungen abgeschlossen."
+
+msgid "Backup failed:"
+msgstr "Backup fehlgeschlagen:"
+
+msgid "Backup cancelled."
+msgstr "Backup abgebrochen."
+
+msgid "You are not allowed to access this page."
+msgstr "Du darfst diese Seite nicht aufrufen."
+
+msgid "Profiles"
+msgstr "Profile"
+
+msgid "Logs"
+msgstr "Logs"
+
+msgid "Settings"
+msgstr "Einstellungen"
+
+msgid "There are no profiles."
+msgstr "Es gibt keine Profile."
+
+msgid "Add a profile"
+msgstr "Profil anlegen"
+
+msgid "Profile"
+msgstr "Profil"
+
+msgid "Back up now"
+msgstr "Jetzt sichern"
+
+msgid "Stored backups"
+msgstr "Gespeicherte Backups"
+
+msgid "No backups yet."
+msgstr "Noch keine Backups."
+
+msgid "Created"
+msgstr "Erstellt"
+
+msgid "File"
+msgstr "Datei"
+
+msgid "Size"
+msgstr "Größe"
+
+msgid "Download"
+msgstr "Herunterladen"
+
+msgid "Delete"
+msgstr "Löschen"
+
+msgid "%d backup"
+msgid_plural "%d backups"
+msgstr[0] "%d Backup"
+msgstr[1] "%d Backups"
+
+msgid "Recent runs"
+msgstr "Letzte Läufe"
+
+msgid "No runs yet."
+msgstr "Noch keine Läufe."
+
+msgid "Started"
+msgstr "Gestartet"
+
+msgid "Trigger"
+msgstr "Auslöser"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Duration"
+msgstr "Dauer"
+
+msgid "Log"
+msgstr "Log"
+
+msgid "%d warning"
+msgid_plural "%d warnings"
+msgstr[0] "%d Warnung"
+msgstr[1] "%d Warnungen"
+
+msgid "Add profile"
+msgstr "Profil anlegen"
+
+msgid "Content"
+msgstr "Inhalt"
+
+msgid "Schedule"
+msgstr "Zeitplan"
+
+msgid "Keep"
+msgstr "Aufbewahren"
+
+msgid "Last run"
+msgstr "Letzter Lauf"
+
+msgid "Edit"
+msgstr "Bearbeiten"
+
+msgid "Duplicate"
+msgstr "Duplizieren"
+
+msgid "Next: %s"
+msgstr "Nächster: %s"
+
+msgid "Edit profile"
+msgstr "Profil bearbeiten"
+
+msgid "Back to profiles"
+msgstr "Zurück zu den Profilen"
+
+msgid "Name"
+msgstr "Name"
+
+msgid "Back up"
+msgstr "Sichern"
+
+msgid "The backup folder of this plugin is never included."
+msgstr "Der Backup-Ordner dieses Plugins wird nie mitgesichert."
+
+msgid "Leave out"
+msgstr "Auslassen"
+
+msgid "One rule per line, like .gitignore, matched against the path in the archive: \"name\" matches everywhere, \"/name\" only in the WordPress folder, a trailing \"/\" only folders, \"*\" is a wildcard. Example: /wp-content/uploads/2019/"
+msgstr "Eine Regel pro Zeile wie in .gitignore, geprüft gegen den Pfad im Archiv: „name“ trifft überall, „/name“ nur im WordPress-Ordner, ein „/“ am Ende nur Ordner, „*“ ist ein Platzhalter. Beispiel: /wp-content/uploads/2019/"
+
+msgid "Database"
+msgstr "Datenbank"
+
+msgid "Other tables"
+msgstr "Weitere Tabellen"
+
+msgid "Also back up tables without the table prefix of this site (e.g. of other applications in the same database)."
+msgstr "Auch Tabellen ohne das Tabellenpräfix dieser Website sichern (z. B. anderer Anwendungen in derselben Datenbank)."
+
+msgid "Leave out tables"
+msgstr "Tabellen auslassen"
+
+msgid "Table names with or without prefix, one per line."
+msgstr "Tabellennamen mit oder ohne Präfix, einer pro Zeile."
+
+msgid "Transients"
+msgstr "Transients"
+
+msgid "Leave out transients (temporary cache entries that WordPress rebuilds)."
+msgstr "Transients auslassen (temporäre Cache-Einträge, die WordPress neu erzeugt)."
+
+msgid "Run"
+msgstr "Ausführen"
+
+msgid "Time"
+msgstr "Uhrzeit"
+
+msgid "HH:MM in the time zone of the site. For hourly runs only the minute counts."
+msgstr "HH:MM in der Zeitzone der Website. Bei stündlichen Läufen zählt nur die Minute."
+
+msgid "Day of the week"
+msgstr "Wochentag"
+
+msgid "Day of the month"
+msgstr "Tag im Monat"
+
+msgid "1 to 28, so every month has this day."
+msgstr "1 bis 28, damit es den Tag in jedem Monat gibt."
+
+msgid "Scheduled runs use WP-Cron, which only runs when the site has visitors. For exact times set DISABLE_WP_CRON and call wp-cron.php from a server cron job, or use: wp rmd-backup run <profile>"
+msgstr "Geplante Läufe nutzen WP-Cron, das nur bei Besuchen der Website läuft. Für genaue Zeiten DISABLE_WP_CRON setzen und wp-cron.php per Server-Cronjob aufrufen, oder: wp rmd-backup run <profil>"
+
+msgid "Retention"
+msgstr "Aufbewahrung"
+
+msgid "Keep backups"
+msgstr "Backups behalten"
+
+msgid "Number of newest backups of this profile to keep. 0 = no limit."
+msgstr "Anzahl der neuesten Backups dieses Profils, die behalten werden. 0 = unbegrenzt."
+
+msgid "Keep for days"
+msgstr "Tage behalten"
+
+msgid "Delete backups of this profile that are older. 0 = no limit. The newest backup is always kept."
+msgstr "Ältere Backups dieses Profils löschen. 0 = unbegrenzt. Das neueste Backup bleibt immer erhalten."
+
+msgid "Notification"
+msgstr "Benachrichtigung"
+
+msgid "Send email"
+msgstr "E-Mail senden"
+
+msgid "The log of the run is attached."
+msgstr "Das Log des Laufs wird angehängt."
+
+msgid "Recipient"
+msgstr "Empfänger"
+
+msgid "Empty = recipient from the settings, otherwise the administration email address."
+msgstr "Leer = Empfänger aus den Einstellungen, sonst die Administrator-E-Mail-Adresse."
+
+msgid "Save profile"
+msgstr "Profil speichern"
+
+msgid "No logs yet."
+msgstr "Noch keine Logs."
+
+msgid "Back to logs"
+msgstr "Zurück zu den Logs"
+
+msgid "This log does not exist."
+msgstr "Dieses Log existiert nicht."
+
+msgid "The log is long; only its end is shown. Download it to see everything."
+msgstr "Das Log ist lang, es wird nur das Ende angezeigt. Zum vollständigen Lesen herunterladen."
+
+msgid "Backup folder"
+msgstr "Backup-Ordner"
+
+msgid "Contains backups/, logs/ and tmp/. To move it, e.g. outside the web root, define RMD_BWP_STORAGE_DIR in wp-config.php."
+msgstr "Enthält backups/, logs/ und tmp/. Zum Verschieben, z. B. außerhalb des Web-Verzeichnisses, RMD_BWP_STORAGE_DIR in der wp-config.php definieren."
+
+msgid "Free disk space"
+msgstr "Freier Speicherplatz"
+
+msgid "WP-Cron"
+msgstr "WP-Cron"
+
+msgid "Disabled (DISABLE_WP_CRON). Make sure a server cron job calls wp-cron.php regularly, otherwise scheduled backups do not run."
+msgstr "Deaktiviert (DISABLE_WP_CRON). Ein Server-Cronjob muss wp-cron.php regelmäßig aufrufen, sonst laufen geplante Backups nicht."
+
+msgid "Active. Scheduled backups start with the first visit after the planned time."
+msgstr "Aktiv. Geplante Backups starten mit dem ersten Besuch nach der geplanten Zeit."
+
+msgid "Archives"
+msgstr "Archive"
+
+msgid "File name"
+msgstr "Dateiname"
+
+msgid "Start file names with the domain of the site"
+msgstr "Dateinamen mit der Domain der Website beginnen"
+
+msgid "Example: %s"
+msgstr "Beispiel: %s"
+
+msgid "Keep logs"
+msgstr "Logs behalten"
+
+msgid "Number of newest logs to keep. 0 = no limit."
+msgstr "Anzahl der neuesten Logs, die behalten werden. 0 = unbegrenzt."
+
+msgid "Keep logs for days"
+msgstr "Logs Tage behalten"
+
+msgid "0 = no limit."
+msgstr "0 = unbegrenzt."
+
+msgid "Default recipient"
+msgstr "Standard-Empfänger"
+
+msgid "Used by profiles without their own recipient. Empty = administration email address."
+msgstr "Für Profile ohne eigenen Empfänger. Leer = Administrator-E-Mail-Adresse."
+
+msgid "Save settings"
+msgstr "Einstellungen speichern"
+
+msgid "WordPress core (wp-admin, wp-includes, files in the main folder)"
+msgstr "WordPress-Kern (wp-admin, wp-includes, Dateien im Hauptordner)"
+
+msgid "wp-config.php"
+msgstr "wp-config.php"
+
+msgid "Plugins"
+msgstr "Plugins"
+
+msgid "Themes"
+msgstr "Themes"
+
+msgid "Uploads (media library)"
+msgstr "Uploads (Mediathek)"
+
+msgid "Rest of wp-content (mu-plugins, languages, …)"
+msgstr "Rest von wp-content (mu-plugins, languages, …)"
+
+msgid "Only manually"
+msgstr "Nur manuell"
+
+msgid "Hourly"
+msgstr "Stündlich"
+
+msgid "Daily"
+msgstr "Täglich"
+
+msgid "Weekly"
+msgstr "Wöchentlich"
+
+msgid "Monthly"
+msgstr "Monatlich"
+
+msgid "Never"
+msgstr "Nie"
+
+msgid "Only after warnings or errors"
+msgstr "Nur nach Warnungen oder Fehlern"
+
+msgid "After every run"
+msgstr "Nach jedem Lauf"
+
+msgid "Hourly at minute %s"
+msgstr "Stündlich zur Minute %s"
+
+msgid "Daily at %s"
+msgstr "Täglich um %s"
+
+msgid "Weekly on %1$s at %2$s"
+msgstr "Wöchentlich am %1$s um %2$s"
+
+msgid "Monthly on day %1$d at %2$s"
+msgstr "Monatlich am %1$d. um %2$s"
+
+msgid "newest %d"
+msgid_plural "newest %d"
+msgstr[0] "nur das neueste"
+msgstr[1] "die neuesten %d"
+
+msgid "%d day"
+msgid_plural "%d days"
+msgstr[0] "%d Tag"
+msgstr[1] "%d Tage"
+
+msgid "all"
+msgstr "alle"
+
+msgid "Manual"
+msgstr "Manuell"
+
+msgid "WP-CLI"
+msgstr "WP-CLI"
+
+msgid "Enter a name."
+msgstr "Gib einen Namen ein."
+
+msgid "Select at least one part to back up."
+msgstr "Wähle mindestens einen Teil zum Sichern aus."
+
+msgid "Enter the time as HH:MM, e.g. 03:00."
+msgstr "Gib die Uhrzeit als HH:MM ein, z. B. 03:00."
+
+msgid "The email address is not valid."
+msgstr "Die E-Mail-Adresse ist ungültig."
+
+msgid "Profile saved."
+msgstr "Profil gespeichert."
+
+msgid "Profile duplicated."
+msgstr "Profil dupliziert."
+
+msgid "Profile deleted."
+msgstr "Profil gelöscht."
+
+msgid "Backup deleted."
+msgstr "Backup gelöscht."
+
+msgid "Log deleted."
+msgstr "Log gelöscht."
+
+msgid "Settings saved."
+msgstr "Einstellungen gespeichert."
+
+msgid "%s (copy)"
+msgstr "%s (Kopie)"
+
+msgid "This file does not exist."
+msgstr "Diese Datei existiert nicht."
+
+msgid "You are not allowed to do this."
+msgstr "Du darfst das nicht tun."
+
+msgid "The file list of this backup is missing."
+msgstr "Die Dateiliste dieses Backups fehlt."
+
+msgid "No database tables to back up were found."
+msgstr "Es wurden keine Datenbanktabellen zum Sichern gefunden."
+
+msgid "Could not open %s for writing."
+msgstr "%s konnte nicht zum Schreiben geöffnet werden."
+
+msgid "Writing the database dump failed. Is the disk full?"
+msgstr "Das Schreiben des Datenbank-Dumps ist fehlgeschlagen. Ist der Speicher voll?"
+
+msgid "The file list could not be written."
+msgstr "Die Dateiliste konnte nicht geschrieben werden."
+
+msgid "Writing the file list failed. Is the disk full?"
+msgstr "Das Schreiben der Dateiliste ist fehlgeschlagen. Ist der Speicher voll?"
+
+msgid "Multisite networks are not supported."
+msgstr "Multisite-Netzwerke werden nicht unterstützt."
+
+msgid "Another backup is still running. Wait for it or cancel it first."
+msgstr "Es läuft noch ein anderes Backup. Warte darauf oder brich es zuerst ab."
+
+msgid "The temporary folder could not be created."
+msgstr "Der temporäre Ordner konnte nicht angelegt werden."
+
+msgid "There is no backup running."
+msgstr "Es läuft kein Backup."
+
+msgid "Backing up table %1$s (%2$d of %3$d) …"
+msgstr "Sichere Tabelle %1$s (%2$d von %3$d) …"
+
+msgid "Collecting files … %s found"
+msgstr "Sammle Dateien … %s gefunden"
+
+msgid "Adding files to the archive … %1$s of %2$s (%3$s)"
+msgstr "Füge Dateien zum Archiv hinzu … %1$s von %2$s (%3$s)"
+
+msgid "Creating the archive …"
+msgstr "Erstelle das Archiv …"
+
+msgid "Saving the archive …"
+msgstr "Speichere das Archiv …"
+
+msgid "Cancelled."
+msgstr "Abgebrochen."
+
+msgid "Local folder"
+msgstr "Lokaler Ordner"
+
+msgid "The archive could not be moved to %s."
+msgstr "Das Archiv konnte nicht nach %s verschoben werden."
+
+msgid "Could not delete %s."
+msgstr "%s konnte nicht gelöscht werden."
+
+msgid "[%1$s] Backup %2$s: %3$s"
+msgstr "[%1$s] Backup %2$s: %3$s"
+
+msgid "Site: %s"
+msgstr "Website: %s"
+
+msgid "Profile: %s"
+msgstr "Profil: %s"
+
+msgid "Status: %s"
+msgstr "Status: %s"
+
+msgid "Started: %s"
+msgstr "Gestartet: %s"
+
+msgid "Finished: %s"
+msgstr "Beendet: %s"
+
+msgid "Archive: %1$s (%2$s)"
+msgstr "Archiv: %1$s (%2$s)"
+
+msgid "Warnings: %d"
+msgstr "Warnungen: %d"
+
+msgid "The log of this run is attached."
+msgstr "Das Log dieses Laufs ist angehängt."
+
+msgid "successful"
+msgstr "erfolgreich"
+
+msgid "finished with warnings"
+msgstr "mit Warnungen beendet"
+
+msgid "failed"
+msgstr "fehlgeschlagen"
+
+msgid "cancelled"
+msgstr "abgebrochen"
+
+msgid "skipped"
+msgstr "übersprungen"
+
+msgid "running"
+msgstr "läuft"
+
+msgid "You are not allowed to create backups."
+msgstr "Du darfst keine Backups erstellen."
+
+msgid "Unknown profile."
+msgstr "Unbekanntes Profil."
+
+msgid "Full backup"
+msgstr "Komplett-Backup"
+
+msgid "Database only"
+msgstr "Nur Datenbank"
+
+msgid "Files only"
+msgstr "Nur Dateien"
+
+msgid "Content only (wp-content)"
+msgstr "Nur Inhalte (wp-content)"
+
+msgid "Uploads only"
+msgstr "Nur Uploads"
+
+msgid "Scheduled backups"
+msgstr "Geplante Backups"
+
+msgid "The backup folder is not writable"
+msgstr "Der Backup-Ordner ist nicht beschreibbar"
+
+msgid "Backups are written to %s. Create the folder or fix its permissions."
+msgstr "Backups werden nach %s geschrieben. Lege den Ordner an oder korrigiere seine Berechtigungen."
+
+msgid "Little disk space left for backups"
+msgstr "Wenig Speicherplatz für Backups"
+
+msgid "Only %s are free. Delete old backups or keep fewer of them."
+msgstr "Nur %s sind frei. Lösche alte Backups oder behalte weniger davon."
+
+msgid "The backup folder is writable"
+msgstr "Der Backup-Ordner ist beschreibbar"
+
+msgid "Backups are written to %s."
+msgstr "Backups werden nach %s geschrieben."
+
+msgid "%s: the scheduled run is overdue. WP-Cron only runs when the site has visitors; set up a server cron job for wp-cron.php."
+msgstr "%s: Der geplante Lauf ist überfällig. WP-Cron läuft nur bei Besuchen der Website; richte einen Server-Cronjob für wp-cron.php ein."
+
+msgid "%1$s: the last scheduled run failed: %2$s"
+msgstr "%1$s: Der letzte geplante Lauf ist fehlgeschlagen: %2$s"
+
+msgid "Scheduled backups run as planned"
+msgstr "Geplante Backups laufen wie vorgesehen"
+
+msgid "No overdue or failed scheduled backups."
+msgstr "Keine überfälligen oder fehlgeschlagenen geplanten Backups."
+
+msgid "Scheduled backups have problems"
+msgstr "Geplante Backups haben Probleme"
+
+msgid "Open backups"
+msgstr "Backups öffnen"
+
+msgid "The folder %s could not be created or is not writable."
+msgstr "Der Ordner %s konnte nicht angelegt werden oder ist nicht beschreibbar."
+
+msgid "The file could not be read."
+msgstr "Die Datei konnte nicht gelesen werden."
+
+msgid "Could not write %s."
+msgstr "%s konnte nicht geschrieben werden."

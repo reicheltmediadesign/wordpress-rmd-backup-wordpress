@@ -1,0 +1,119 @@
+/*
+ * Admin screen of RMD Backup WordPress (Tools → Backups).
+ * Classes: .rmd-bwp (page), .rmd-bwp-run, .rmd-bwp-progress (run panel,
+ * data-status = running|success|warning|error|cancelled), .rmd-bwp-bar,
+ * .rmd-bwp-table, .rmd-bwp-badge-<status>, .rmd-bwp-log (log view).
+ */
+
+.rmd-bwp .nav-tab-wrapper {
+	margin-bottom: 16px;
+}
+
+.rmd-bwp-run {
+	margin: 16px 0;
+}
+
+.rmd-bwp-progress {
+	max-width: 900px;
+	margin: 16px 0;
+	padding: 4px 16px 8px;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-left: 4px solid #2271b1;
+}
+
+.rmd-bwp-progress[data-status="success"] {
+	border-left-color: #00a32a;
+}
+
+.rmd-bwp-progress[data-status="warning"] {
+	border-left-color: #dba617;
+}
+
+.rmd-bwp-progress[data-status="error"],
+.rmd-bwp-progress[data-status="cancelled"] {
+	border-left-color: #d63638;
+}
+
+.rmd-bwp-bar {
+	width: 100%;
+	height: 16px;
+}
+
+.rmd-bwp-result {
+	font-weight: 600;
+}
+
+.rmd-bwp-hint,
+.rmd-bwp-message {
+	color: #646970;
+}
+
+.rmd-bwp-table {
+	max-width: 1200px;
+}
+
+.rmd-bwp-table .num {
+	text-align: right;
+	white-space: nowrap;
+}
+
+.rmd-bwp-actions {
+	text-align: right;
+	white-space: nowrap;
+}
+
+.rmd-bwp-badge {
+	display: inline-block;
+	padding: 0 6px;
+	border-radius: 3px;
+	background: #f0f0f1;
+	color: #50575e;
+	font-size: 12px;
+	white-space: nowrap;
+}
+
+.rmd-bwp-badge-success {
+	background: #edfaef;
+	color: #00650f;
+}
+
+.rmd-bwp-badge-warning {
+	background: #fcf9e8;
+	color: #6e5600;
+}
+
+.rmd-bwp-badge-error,
+.rmd-bwp-badge-skipped {
+	background: #fcf0f1;
+	color: #8a1f21;
+}
+
+.rmd-bwp-check {
+	display: block;
+	margin-bottom: 4px;
+}
+
+.rmd-bwp-log {
+	max-width: 1200px;
+	max-height: 70vh;
+	overflow: auto;
+	padding: 12px;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	font-size: 12px;
+	line-height: 1.5;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.rmd-bwp-log-warning {
+	color: #6e5600;
+	background: #fcf9e8;
+}
+
+.rmd-bwp-log-error {
+	color: #8a1f21;
+	background: #fcf0f1;
+	font-weight: 600;
+}

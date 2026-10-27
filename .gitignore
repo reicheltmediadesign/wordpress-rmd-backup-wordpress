@@ -1,0 +1,13 @@
+vendor/
+dist/
+.phpunit.cache/
+.phpunit.result.cache
+
+# Generated translation binaries are produced by the release workflow
+languages/*.mo
+languages/*.l10n.php
+
+.DS_Store
+.vscode/
+.idea/
+*.log

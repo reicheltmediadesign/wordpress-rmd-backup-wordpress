@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.1"
+          coverage: none
+          tools: composer:v2, wp-cli
+
+      - name: Check tag matches plugin version
+        run: bash bin/check-version.sh "${GITHUB_REF_NAME}"
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress
+
+      - name: Lint and test
+        run: |
+          vendor/bin/phpcs
+          vendor/bin/phpunit
+
+      - name: Build translations
+        run: bash bin/make-i18n.sh
+
+      - name: Build plugin zip
+        run: bash bin/build-zip.sh
+
+      - name: Build update metadata (update.json)
+        run: bash bin/build-update-info.sh
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: dist/rmd-backup-wordpress.zip
+
+      # update.json must stay attached: installed sites read
+      # releases/latest/download/update.json to learn about new versions.
+      - name: Create draft release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            --title="${GITHUB_REF_NAME}" \
+            --draft \
+            --generate-notes \
+            dist/rmd-backup-wordpress.zip \
+            dist/update.json

@@ -1,0 +1,5 @@
+# Keep LF line endings everywhere so shell scripts and CI behave the same on Windows checkouts.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.mo binary
