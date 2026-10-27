@@ -1,7 +1,7 @@
 <?php
 /**
- * Registry of destinations. The first one receives the archive from the job;
- * further (remote) destinations would get a copy before it.
+ * Registry of destinations: the local folder always receives the archive;
+ * a configured remote destination gets a copy when the profile asks for it.
  *
  * @package RMD\BackupWordpress
  */
@@ -17,9 +17,9 @@ final class Destinations {
 	}
 
 	/**
-	 * @return list<Destination>
+	 * The remote destination, also when it is not (fully) configured.
 	 */
-	public static function all(): array {
-		return [ self::local() ];
+	public static function remote(): RemoteDestination {
+		return SftpDestination::from_settings();
 	}
 }

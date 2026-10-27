@@ -15,9 +15,11 @@ All notable changes to this plugin are documented here. The format follows
 - Retention per profile by number and age.
 - Log file for every run, run history, log viewer and automatic log cleanup.
 - Email notification per profile (never, after problems, always) with the log attached.
+- Encryption of the archives with age (X25519 public key; `.zip.age`), resumable over several steps; `RMD_BWP_AGE_RECIPIENT` in `wp-config.php` takes precedence.
+- Off-site copy via SFTP (e.g. STRATO HiDrive) per profile: only encrypted archives, resumable chunked upload to `….part`, pinned host key, retention on the server, password stored encrypted or set as constant.
 - Resumable runs in short steps that continue in the background via loopback requests, with WP-Cron as fallback.
 - Appending zip writer with Zip64 support, so large sites are not rewritten on every step.
-- Domain of the site at the start of archive and log names (setting, on by default).
+- Domain of the site in archive and log names after the date (setting, on by default).
 - WP-CLI commands `run`, `resume`, `cancel`, `profiles`, `list`.
 - Site Health checks for the backup folder and scheduled runs.
 - Automatic updates from GitHub releases.

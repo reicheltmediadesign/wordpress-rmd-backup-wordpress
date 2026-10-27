@@ -137,6 +137,12 @@ msgid_plural "%d warnings"
 msgstr[0] "%d Warnung"
 msgstr[1] "%d Warnungen"
 
+msgid "uploaded"
+msgstr "hochgeladen"
+
+msgid "upload failed"
+msgstr "Upload fehlgeschlagen"
+
 msgid "Add profile"
 msgstr "Profil anlegen"
 
@@ -239,6 +245,18 @@ msgstr "Tage behalten"
 msgid "Delete backups of this profile that are older. 0 = no limit. The newest backup is always kept."
 msgstr "Ältere Backups dieses Profils löschen. 0 = unbegrenzt. Das neueste Backup bleibt immer erhalten."
 
+msgid "Off-site copy"
+msgstr "Externe Kopie"
+
+msgid "Upload to SFTP"
+msgstr "Per SFTP hochladen"
+
+msgid "Also upload the encrypted backup to the SFTP server from the settings. The retention rules above also apply there."
+msgstr "Das verschlüsselte Backup zusätzlich auf den SFTP-Server aus den Einstellungen hochladen. Die Aufbewahrungsregeln oben gelten dort ebenfalls."
+
+msgid "Needs an encryption key and a tested SFTP connection in the settings first."
+msgstr "Dafür werden zuerst ein Verschlüsselungsschlüssel und eine getestete SFTP-Verbindung in den Einstellungen benötigt."
+
 msgid "Notification"
 msgstr "Benachrichtigung"
 
@@ -293,11 +311,29 @@ msgstr "Archive"
 msgid "File name"
 msgstr "Dateiname"
 
-msgid "Start file names with the domain of the site"
-msgstr "Dateinamen mit der Domain der Website beginnen"
+msgid "Include the domain of the site in file names"
+msgstr "Domain der Website in den Dateinamen aufnehmen"
 
 msgid "Example: %s"
 msgstr "Beispiel: %s"
+
+msgid "Encryption"
+msgstr "Verschlüsselung"
+
+msgid "Backups are encrypted with age for a public key. Only the public key is stored here; the private key stays with you and is needed to restore. Without it, encrypted backups cannot be opened."
+msgstr "Backups werden mit age für einen öffentlichen Schlüssel verschlüsselt. Hier liegt nur der öffentliche Schlüssel; den privaten behältst du und brauchst ihn zum Wiederherstellen. Ohne ihn lassen sich verschlüsselte Backups nicht öffnen."
+
+msgid "The PHP extension sodium is not active on this server, so backups cannot be encrypted. Ask the host to enable it."
+msgstr "Die PHP-Erweiterung sodium ist auf diesem Server nicht aktiv, daher können Backups nicht verschlüsselt werden. Bitte den Hoster, sie zu aktivieren."
+
+msgid "Public key"
+msgstr "Öffentlicher Schlüssel"
+
+msgid "Set by RMD_BWP_AGE_RECIPIENT in wp-config.php."
+msgstr "Gesetzt durch RMD_BWP_AGE_RECIPIENT in der wp-config.php."
+
+msgid "age public key (age1…), e.g. from \"age-keygen -o key.txt\". Empty = backups are not encrypted. Uploads to SFTP require encryption. More robust: define RMD_BWP_AGE_RECIPIENT in wp-config.php, then it cannot be changed here."
+msgstr "Öffentlicher age-Schlüssel (age1…), z. B. aus „age-keygen -o key.txt“. Leer = Backups werden nicht verschlüsselt. Uploads per SFTP setzen Verschlüsselung voraus. Robuster: RMD_BWP_AGE_RECIPIENT in der wp-config.php definieren, dann ist er hier nicht änderbar."
 
 msgid "Keep logs"
 msgstr "Logs behalten"
@@ -319,6 +355,69 @@ msgstr "Für Profile ohne eigenen Empfänger. Leer = Administrator-E-Mail-Adress
 
 msgid "Save settings"
 msgstr "Einstellungen speichern"
+
+msgid "Upload to SFTP (e.g. HiDrive)"
+msgstr "Upload per SFTP (z. B. HiDrive)"
+
+msgid "Profiles with \"Upload to SFTP\" copy their encrypted backups to this server, into a folder for this site. Use an account that can only reach its own folder and has no other protocols."
+msgstr "Profile mit „Per SFTP hochladen“ kopieren ihre verschlüsselten Backups auf diesen Server, in einen Ordner für diese Website. Verwende ein Konto, das nur seinen eigenen Ordner erreicht und keine anderen Protokolle hat."
+
+msgid "The stored password can no longer be decrypted (the security keys in wp-config.php changed). Enter it again."
+msgstr "Das gespeicherte Passwort lässt sich nicht mehr entschlüsseln (die Sicherheitsschlüssel in der wp-config.php haben sich geändert). Gib es erneut ein."
+
+msgid "Server"
+msgstr "Server"
+
+msgid "Port"
+msgstr "Port"
+
+msgid "User name"
+msgstr "Benutzername"
+
+msgid "Password"
+msgstr "Passwort"
+
+msgid "Set in wp-config.php"
+msgstr "In der wp-config.php gesetzt"
+
+msgid "unchanged"
+msgstr "unverändert"
+
+msgid "Preferably a protocol password of this account (HiDrive: account settings), so it can be revoked on its own. Stored encrypted with the security keys of wp-config.php; empty = keep the stored one."
+msgstr "Am besten ein Protokoll-Passwort dieses Kontos (HiDrive: Kontoeinstellungen), damit es sich einzeln widerrufen lässt. Wird mit den Sicherheitsschlüsseln der wp-config.php verschlüsselt gespeichert; leer = gespeichertes beibehalten."
+
+msgid "Delete stored password"
+msgstr "Gespeichertes Passwort löschen"
+
+msgid "Base folder"
+msgstr "Basisordner"
+
+msgid "Empty = the own folder of the account (HiDrive: /users/<name>), otherwise the folder after login. Relative paths start at the folder after login."
+msgstr "Leer = eigener Ordner des Kontos (HiDrive: /users/<name>), sonst der Ordner nach dem Login. Relative Pfade beginnen beim Ordner nach dem Login."
+
+msgid "Folder for this site"
+msgstr "Ordner für diese Website"
+
+msgid "Letters, digits, dots, hyphens. Default: the domain of the site."
+msgstr "Buchstaben, Ziffern, Punkte, Bindestriche. Standard: die Domain der Website."
+
+msgid "Host key"
+msgstr "Host-Schlüssel"
+
+msgid "not known yet"
+msgstr "noch nicht bekannt"
+
+msgid "Stored at the first connection test. Every upload checks that the server still presents this key, so a fake server cannot receive the backups."
+msgstr "Wird beim ersten Verbindungstest gespeichert. Jeder Upload prüft, dass der Server weiterhin diesen Schlüssel vorlegt, damit kein gefälschter Server die Backups erhält."
+
+msgid "Save SFTP settings"
+msgstr "SFTP-Einstellungen speichern"
+
+msgid "Test connection"
+msgstr "Verbindung testen"
+
+msgid "Reset host key"
+msgstr "Host-Schlüssel zurücksetzen"
 
 msgid "WordPress core (wp-admin, wp-includes, files in the main folder)"
 msgstr "WordPress-Kern (wp-admin, wp-includes, Dateien im Hauptordner)"
@@ -405,6 +504,33 @@ msgstr "Gib die Uhrzeit als HH:MM ein, z. B. 03:00."
 msgid "The email address is not valid."
 msgstr "Die E-Mail-Adresse ist ungültig."
 
+msgid "The public key is not a valid age key (age1…)."
+msgstr "Der öffentliche Schlüssel ist kein gültiger age-Schlüssel (age1…)."
+
+msgid "Post-quantum keys (age1pq…) are not supported yet. Create the key with age-keygen without -pq."
+msgstr "Post-Quanten-Schlüssel (age1pq…) werden noch nicht unterstützt. Erzeuge den Schlüssel mit age-keygen ohne -pq."
+
+msgid "The server name is not valid."
+msgstr "Der Servername ist ungültig."
+
+msgid "The port must be a number between 1 and 65535."
+msgstr "Der Port muss eine Zahl zwischen 1 und 65535 sein."
+
+msgid "The user name contains invalid characters."
+msgstr "Der Benutzername enthält ungültige Zeichen."
+
+msgid "The base folder must not contain \"..\"."
+msgstr "Der Basisordner darf kein „..“ enthalten."
+
+msgid "The folder name may only contain letters, digits, dots, hyphens and underscores."
+msgstr "Der Ordnername darf nur Buchstaben, Ziffern, Punkte, Bindestriche und Unterstriche enthalten."
+
+msgid "SFTP settings saved. Run \"Test connection\" to check them."
+msgstr "SFTP-Einstellungen gespeichert. Prüfe sie mit „Verbindung testen“."
+
+msgid "Host key reset. The next connection test stores the key the server presents."
+msgstr "Host-Schlüssel zurückgesetzt. Der nächste Verbindungstest speichert den Schlüssel, den der Server vorlegt."
+
 msgid "Profile saved."
 msgstr "Profil gespeichert."
 
@@ -429,6 +555,9 @@ msgstr "%s (Kopie)"
 msgid "This file does not exist."
 msgstr "Diese Datei existiert nicht."
 
+msgid "Connection works. Folder %1$s is writable and contains %2$d backups of this site. Host key: %3$s"
+msgstr "Verbindung funktioniert. Der Ordner %1$s ist beschreibbar und enthält %2$d Backups dieser Website. Host-Schlüssel: %3$s"
+
 msgid "You are not allowed to do this."
 msgstr "Du darfst das nicht tun."
 
@@ -444,6 +573,18 @@ msgstr "%s konnte nicht zum Schreiben geöffnet werden."
 msgid "Writing the database dump failed. Is the disk full?"
 msgstr "Das Schreiben des Datenbank-Dumps ist fehlgeschlagen. Ist der Speicher voll?"
 
+msgid "The archive to encrypt is missing."
+msgstr "Das zu verschlüsselnde Archiv fehlt."
+
+msgid "The archive could not be opened for encryption."
+msgstr "Das Archiv konnte zum Verschlüsseln nicht geöffnet werden."
+
+msgid "The archive could not be read for encryption."
+msgstr "Das Archiv konnte zum Verschlüsseln nicht gelesen werden."
+
+msgid "Writing the encrypted archive failed. Is the disk full?"
+msgstr "Das Schreiben des verschlüsselten Archivs ist fehlgeschlagen. Ist der Speicher voll?"
+
 msgid "The file list could not be written."
 msgstr "Die Dateiliste konnte nicht geschrieben werden."
 
@@ -455,6 +596,15 @@ msgstr "Multisite-Netzwerke werden nicht unterstützt."
 
 msgid "Another backup is still running. Wait for it or cancel it first."
 msgstr "Es läuft noch ein anderes Backup. Warte darauf oder brich es zuerst ab."
+
+msgid "Uploads to the SFTP server require encryption. Enter an age public key in the settings."
+msgstr "Uploads auf den SFTP-Server setzen Verschlüsselung voraus. Trage in den Einstellungen einen öffentlichen age-Schlüssel ein."
+
+msgid "The SFTP connection is not set up."
+msgstr "Die SFTP-Verbindung ist nicht eingerichtet."
+
+msgid "Encryption needs the PHP extension sodium, which is not active on this server. Ask the host to enable it, or remove the public key in the settings."
+msgstr "Die Verschlüsselung braucht die PHP-Erweiterung sodium, die auf diesem Server nicht aktiv ist. Bitte den Hoster, sie zu aktivieren, oder entferne den öffentlichen Schlüssel in den Einstellungen."
 
 msgid "The temporary folder could not be created."
 msgstr "Der temporäre Ordner konnte nicht angelegt werden."
@@ -474,6 +624,12 @@ msgstr "Füge Dateien zum Archiv hinzu … %1$s von %2$s (%3$s)"
 msgid "Creating the archive …"
 msgstr "Erstelle das Archiv …"
 
+msgid "Encrypting the archive …"
+msgstr "Verschlüssele das Archiv …"
+
+msgid "Uploading … %1$s of %2$s"
+msgstr "Lade hoch … %1$s von %2$s"
+
 msgid "Saving the archive …"
 msgstr "Speichere das Archiv …"
 
@@ -488,6 +644,27 @@ msgstr "Das Archiv konnte nicht nach %s verschoben werden."
 
 msgid "Could not delete %s."
 msgstr "%s konnte nicht gelöscht werden."
+
+msgid "The test file could not be written and deleted."
+msgstr "Die Testdatei konnte nicht geschrieben und gelöscht werden."
+
+msgid "Invalid file name."
+msgstr "Ungültiger Dateiname."
+
+msgid "The host key of the SFTP server is not known yet. Run \"Test connection\" in the settings first."
+msgstr "Der Host-Schlüssel des SFTP-Servers ist noch nicht bekannt. Führe zuerst „Verbindung testen“ in den Einstellungen aus."
+
+msgid "No connection to %1$s: %2$s"
+msgstr "Keine Verbindung zu %1$s: %2$s"
+
+msgid "The host key of the SFTP server has changed (expected %1$s, received %2$s). The upload was stopped. If the provider changed its key, reset the host key in the settings."
+msgstr "Der Host-Schlüssel des SFTP-Servers hat sich geändert (erwartet %1$s, erhalten %2$s). Der Upload wurde gestoppt. Falls der Anbieter seinen Schlüssel geändert hat, setze den Host-Schlüssel in den Einstellungen zurück."
+
+msgid "The SFTP login failed. Check user name and password."
+msgstr "Die SFTP-Anmeldung ist fehlgeschlagen. Prüfe Benutzername und Passwort."
+
+msgid "The folder %s could not be created on the SFTP server."
+msgstr "Der Ordner %s konnte auf dem SFTP-Server nicht angelegt werden."
 
 msgid "[%1$s] Backup %2$s: %3$s"
 msgstr "[%1$s] Backup %2$s: %3$s"
@@ -509,6 +686,12 @@ msgstr "Beendet: %s"
 
 msgid "Archive: %1$s (%2$s)"
 msgstr "Archiv: %1$s (%2$s)"
+
+msgid "Upload: done"
+msgstr "Upload: erledigt"
+
+msgid "Upload: failed, the backup is only stored on the website"
+msgstr "Upload: fehlgeschlagen, das Backup liegt nur auf der Website"
 
 msgid "Warnings: %d"
 msgstr "Warnungen: %d"
@@ -563,6 +746,12 @@ msgstr "Der Backup-Ordner ist nicht beschreibbar"
 
 msgid "Backups are written to %s. Create the folder or fix its permissions."
 msgstr "Backups werden nach %s geschrieben. Lege den Ordner an oder korrigiere seine Berechtigungen."
+
+msgid "Backups cannot be encrypted"
+msgstr "Backups können nicht verschlüsselt werden"
+
+msgid "An encryption key is set, but the PHP extension sodium is not active. Every backup fails until the host enables it."
+msgstr "Ein Verschlüsselungsschlüssel ist gesetzt, aber die PHP-Erweiterung sodium ist nicht aktiv. Jedes Backup schlägt fehl, bis der Hoster sie aktiviert."
 
 msgid "Little disk space left for backups"
 msgstr "Wenig Speicherplatz für Backups"

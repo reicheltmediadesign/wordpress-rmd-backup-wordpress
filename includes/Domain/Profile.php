@@ -58,7 +58,8 @@ final class Profile {
 		public readonly int $keep_count,
 		public readonly int $keep_days,
 		public readonly string $notify,
-		public readonly string $notify_email
+		public readonly string $notify_email,
+		public readonly bool $remote
 	) {}
 
 	/**
@@ -81,6 +82,7 @@ final class Profile {
 			'keep_days'          => 0,
 			'notify'             => 'problems',
 			'notify_email'       => '',
+			'remote'             => false,
 		];
 	}
 
@@ -168,7 +170,8 @@ final class Profile {
 			self::int( $raw, 'keep_count', 0, 1000 ),
 			self::int( $raw, 'keep_days', 0, 3650 ),
 			self::choice( $raw, 'notify', self::NOTIFY_MODES ),
-			$email
+			$email,
+			self::bool( $raw, 'remote' )
 		);
 
 		return [

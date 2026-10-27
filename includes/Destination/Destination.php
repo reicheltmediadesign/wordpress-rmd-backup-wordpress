@@ -1,15 +1,12 @@
 <?php
 /**
- * Where finished archives are kept. Only the local folder exists so far; a
- * remote target (SFTP, S3, …) implements the same interface and is added to
- * Destinations::all().
+ * Where finished archives are kept: the local backup folder
+ * (LocalDestination) and remote targets (RemoteDestination, e.g. SFTP).
  *
  * @package RMD\BackupWordpress
  */
 
 namespace RMD\BackupWordpress\Destination;
-
-use RMD\BackupWordpress\Log\Logger;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -19,12 +16,6 @@ interface Destination {
 	 * Short name for logs and the admin screen.
 	 */
 	public function label(): string;
-
-	/**
-	 * Takes over a finished archive. The local file may be moved; callers must
-	 * not use $file afterwards.
-	 */
-	public function store( string $file, string $name, Logger $log ): void;
 
 	/**
 	 * Archives kept here, newest first.

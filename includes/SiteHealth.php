@@ -7,6 +7,7 @@
 
 namespace RMD\BackupWordpress;
 
+use RMD\BackupWordpress\Backup\Encryptor;
 use RMD\BackupWordpress\Backup\Runner;
 use RMD\BackupWordpress\Log\LogStore;
 
@@ -50,6 +51,14 @@ final class SiteHealth {
 				__( 'The backup folder is not writable', 'rmd-backup-wordpress' ),
 				/* translators: %s: folder path */
 				sprintf( __( 'Backups are written to %s. Create the folder or fix its permissions.', 'rmd-backup-wordpress' ), $root )
+			);
+		}
+		if ( '' !== Settings::recipient() && ! Encryptor::available() ) {
+			return self::result(
+				'rmd_bwp_storage',
+				'critical',
+				__( 'Backups cannot be encrypted', 'rmd-backup-wordpress' ),
+				__( 'An encryption key is set, but the PHP extension sodium is not active. Every backup fails until the host enables it.', 'rmd-backup-wordpress' )
 			);
 		}
 		if ( null !== $free && $free < self::LOW_SPACE ) {

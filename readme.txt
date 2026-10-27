@@ -19,6 +19,8 @@ RMD Backup WordPress creates one zip per run with the files and the database of 
 * Retention by number and age; the newest backup is always kept.
 * A log for every run, viewable in the admin; old logs are deleted automatically.
 * Email after errors or after every run, with the log attached.
+* Encryption with age: only the public key is stored on the site.
+* Off-site copy of encrypted backups via SFTP, e.g. to STRATO HiDrive.
 * Runs in short steps and continues in the background, so PHP time limits do not matter.
 * WP-CLI commands and Site Health checks.
 

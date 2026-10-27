@@ -1,10 +1,11 @@
 <?php
 /**
  * Names of backup runs. A run id looks like
- * example.com_2026-10-27_030000_full_a1b2c3: site (optional), local start
- * time, profile id and a random part so archive URLs cannot be guessed on
- * servers that ignore .htaccess. The archive is <id>.zip, the log <id>.log.
- * Every name coming from a request is checked with parse().
+ * 2026-10-27_030000_example.com_full_a1b2c3: local start time (so names sort
+ * by date), site (optional), profile id and a random part so archive URLs
+ * cannot be guessed on servers that ignore .htaccess. Site and profile never
+ * contain "_", so the parts are unambiguous. The archive is <id>.zip, the log
+ * <id>.log. Every name coming from a request is checked with parse().
  *
  * @package RMD\BackupWordpress
  */
@@ -18,12 +19,16 @@ use DateTimeImmutable;
 
 final class ArchiveName {
 
-	private const PATTERN = '/^(?:([a-z0-9.-]{1,80})_)?(\d{4}-\d{2}-\d{2})_(\d{6})_([a-z0-9-]{1,40})_([a-z0-9]{6})\.(zip|log)$/';
+	private const PATTERN = '/^(\d{4}-\d{2}-\d{2})_(\d{6})_(?:([a-z0-9.-]{1,80})_)?([a-z0-9-]{1,40})_([a-z0-9]{6})\.(zip|zip\.age|log)$/';
+
+	/** File types: plain archive, age-encrypted archive, log. */
+	public const ZIP       = 'zip';
+	public const ENCRYPTED = 'zip.age';
+	public const LOG       = 'log';
 
 	public static function id( DateTimeImmutable $time, string $profile_id, string $random, string $site = '' ): string {
 		$random = substr( strtolower( (string) preg_replace( '/[^A-Za-z0-9]/', '', $random ) ) . '000000', 0, 6 );
-		$id     = $time->format( 'Y-m-d_His' ) . '_' . $profile_id . '_' . $random;
-		return '' === $site ? $id : $site . '_' . $id;
+		return $time->format( 'Y-m-d_His' ) . '_' . ( '' === $site ? '' : $site . '_' ) . $profile_id . '_' . $random;
 	}
 
 	/**
@@ -50,16 +55,24 @@ final class ArchiveName {
 			return null;
 		}
 		return [
-			'id'      => substr( $file, 0, -4 ),
-			'site'    => $match[1],
+			'id'      => substr( $file, 0, -strlen( $match[6] ) - 1 ),
+			'site'    => $match[3],
 			'profile' => $match[4],
-			'date'    => $match[2],
-			'time'    => substr( $match[3], 0, 2 ) . ':' . substr( $match[3], 2, 2 ) . ':' . substr( $match[3], 4, 2 ),
+			'date'    => $match[1],
+			'time'    => substr( $match[2], 0, 2 ) . ':' . substr( $match[2], 2, 2 ) . ':' . substr( $match[2], 4, 2 ),
 			'type'    => $match[6],
 		];
 	}
 
 	public static function is_id( string $id ): bool {
 		return null !== self::parse( $id . '.zip' );
+	}
+
+	/**
+	 * Whether a file name is a backup archive (plain or encrypted).
+	 */
+	public static function is_archive( string $file ): bool {
+		$parsed = self::parse( $file );
+		return null !== $parsed && self::LOG !== $parsed['type'];
 	}
 }

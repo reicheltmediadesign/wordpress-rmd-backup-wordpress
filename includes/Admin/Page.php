@@ -8,10 +8,13 @@
 
 namespace RMD\BackupWordpress\Admin;
 
+use DateTimeImmutable;
+use RMD\BackupWordpress\Backup\Encryptor;
 use RMD\BackupWordpress\Backup\Job;
 use RMD\BackupWordpress\Backup\Runner;
-use DateTimeImmutable;
 use RMD\BackupWordpress\Destination\Destinations;
+use RMD\BackupWordpress\Destination\SftpDestination;
+use RMD\BackupWordpress\Destination\SftpSettings;
 use RMD\BackupWordpress\Domain\ArchiveName;
 use RMD\BackupWordpress\Domain\Profile;
 use RMD\BackupWordpress\Log\LogStore;
@@ -43,6 +46,9 @@ final class Page {
 		add_action( 'admin_post_rmd_bwp_delete_backup', [ self::class, 'delete_backup' ] );
 		add_action( 'admin_post_rmd_bwp_delete_log', [ self::class, 'delete_log' ] );
 		add_action( 'admin_post_rmd_bwp_save_settings', [ self::class, 'save_settings' ] );
+		add_action( 'admin_post_rmd_bwp_save_sftp', [ self::class, 'save_sftp' ] );
+		add_action( 'admin_post_rmd_bwp_test_sftp', [ self::class, 'test_sftp' ] );
+		add_action( 'admin_post_rmd_bwp_reset_hostkey', [ self::class, 'reset_hostkey' ] );
 		add_filter( 'plugin_action_links_' . RMD_BWP_BASENAME, [ self::class, 'action_links' ] );
 	}
 
@@ -271,6 +277,14 @@ final class Page {
 					)
 				) . '</div>';
 			}
+			$remote = (string) ( $run['remote'] ?? '' );
+			if ( '' !== $remote ) {
+				$message .= sprintf(
+					' <span class="rmd-bwp-badge rmd-bwp-badge-%s">%s</span>',
+					'uploaded' === $remote ? 'success' : 'error',
+					esc_html( 'uploaded' === $remote ? __( 'uploaded', 'rmd-backup-wordpress' ) : __( 'upload failed', 'rmd-backup-wordpress' ) )
+				);
+			}
 			printf(
 				'<tr><td>%s</td><td>%s</td><td>%s</td><td><span class="rmd-bwp-badge rmd-bwp-badge-%s">%s</span>%s</td><td>%s</td><td class="num">%s</td><td class="rmd-bwp-actions">%s</td></tr>',
 				esc_html( self::date( (int) $run['started'] ) ),
@@ -415,6 +429,19 @@ final class Page {
 		self::number_field( 'keep_days', __( 'Keep for days', 'rmd-backup-wordpress' ), (int) $values['keep_days'], 0, 3650, __( 'Delete backups of this profile that are older. 0 = no limit. The newest backup is always kept.', 'rmd-backup-wordpress' ) );
 		echo '</tbody></table>';
 
+		echo '<h3>' . esc_html__( 'Off-site copy', 'rmd-backup-wordpress' ) . '</h3>';
+		echo '<table class="form-table" role="presentation"><tbody>';
+		$remote_ready = '' !== Settings::recipient() && Destinations::remote()->is_configured();
+		self::checkbox_field(
+			'remote',
+			__( 'Upload to SFTP', 'rmd-backup-wordpress' ),
+			(bool) $values['remote'],
+			$remote_ready
+				? __( 'Also upload the encrypted backup to the SFTP server from the settings. The retention rules above also apply there.', 'rmd-backup-wordpress' )
+				: __( 'Needs an encryption key and a tested SFTP connection in the settings first.', 'rmd-backup-wordpress' )
+		);
+		echo '</tbody></table>';
+
 		echo '<h3>' . esc_html__( 'Notification', 'rmd-backup-wordpress' ) . '</h3>';
 		echo '<table class="form-table" role="presentation"><tbody>';
 		self::select_field( 'notify', __( 'Send email', 'rmd-backup-wordpress' ), (string) $values['notify'], self::notify_labels(), __( 'The log of the run is attached.', 'rmd-backup-wordpress' ) );
@@ -510,7 +537,7 @@ final class Page {
 			'<tr><th scope="row">%1$s</th><td><input type="hidden" name="settings[filename_site]" value="0"><label><input type="checkbox" name="settings[filename_site]" value="1" %2$s> %3$s</label><p class="description">%4$s</p></td></tr>',
 			esc_html__( 'File name', 'rmd-backup-wordpress' ),
 			checked( $settings['filename_site'], true, false ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Fixed attribute string.
-			esc_html__( 'Start file names with the domain of the site', 'rmd-backup-wordpress' ),
+			esc_html__( 'Include the domain of the site in file names', 'rmd-backup-wordpress' ),
 			esc_html(
 				sprintf(
 					/* translators: %s: example file name */
@@ -520,6 +547,26 @@ final class Page {
 			)
 		);
 		echo '</tbody></table>';
+
+		echo '<h2>' . esc_html__( 'Encryption', 'rmd-backup-wordpress' ) . '</h2>';
+		echo '<p>' . esc_html__( 'Backups are encrypted with age for a public key. Only the public key is stored here; the private key stays with you and is needed to restore. Without it, encrypted backups cannot be opened.', 'rmd-backup-wordpress' ) . '</p>';
+		echo '<table class="form-table" role="presentation"><tbody>';
+		if ( ! Encryptor::available() ) {
+			echo '<div class="notice notice-error inline"><p>' . esc_html__( 'The PHP extension sodium is not active on this server, so backups cannot be encrypted. Ask the host to enable it.', 'rmd-backup-wordpress' ) . '</p></div>';
+		}
+		if ( Settings::recipient_locked() ) {
+			printf(
+				'<tr><th scope="row">%s</th><td><code class="rmd-bwp-key">%s</code><input type="hidden" name="settings[age_recipient]" value="%s"><p class="description">%s</p></td></tr>',
+				esc_html__( 'Public key', 'rmd-backup-wordpress' ),
+				esc_html( Settings::recipient() ),
+				esc_attr( $settings['age_recipient'] ),
+				esc_html__( 'Set by RMD_BWP_AGE_RECIPIENT in wp-config.php.', 'rmd-backup-wordpress' )
+			);
+		} else {
+			self::text_field( 'age_recipient', __( 'Public key', 'rmd-backup-wordpress' ), $settings['age_recipient'], __( 'age public key (age1…), e.g. from "age-keygen -o key.txt". Empty = backups are not encrypted. Uploads to SFTP require encryption. More robust: define RMD_BWP_AGE_RECIPIENT in wp-config.php, then it cannot be changed here.', 'rmd-backup-wordpress' ), 'large-text code', false, 'age1…', '', 'settings' );
+		}
+		echo '</tbody></table>';
+
 		echo '<h2>' . esc_html__( 'Logs', 'rmd-backup-wordpress' ) . '</h2>';
 		echo '<table class="form-table" role="presentation"><tbody>';
 		self::number_field( 'log_keep_count', __( 'Keep logs', 'rmd-backup-wordpress' ), $settings['log_keep_count'], 0, 10000, __( 'Number of newest logs to keep. 0 = no limit.', 'rmd-backup-wordpress' ), '', 'settings' );
@@ -531,6 +578,79 @@ final class Page {
 		echo '</tbody></table>';
 		submit_button( __( 'Save settings', 'rmd-backup-wordpress' ) );
 		echo '</form>';
+
+		self::render_sftp_settings();
+	}
+
+	private static function render_sftp_settings(): void {
+		$sftp = SftpSettings::get();
+
+		echo '<hr><h2 id="sftp">' . esc_html__( 'Upload to SFTP (e.g. HiDrive)', 'rmd-backup-wordpress' ) . '</h2>';
+		echo '<p>' . esc_html__( 'Profiles with "Upload to SFTP" copy their encrypted backups to this server, into a folder for this site. Use an account that can only reach its own folder and has no other protocols.', 'rmd-backup-wordpress' ) . '</p>';
+		if ( SftpSettings::password_unreadable() ) {
+			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'The stored password can no longer be decrypted (the security keys in wp-config.php changed). Enter it again.', 'rmd-backup-wordpress' ) . '</p></div>';
+		}
+
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		echo '<input type="hidden" name="action" value="rmd_bwp_save_sftp">';
+		wp_nonce_field( 'rmd_bwp_save_sftp' );
+		echo '<table class="form-table" role="presentation"><tbody>';
+		self::sftp_field( 'host', __( 'Server', 'rmd-backup-wordpress' ), $sftp['host'], 'regular-text code', SftpSettings::DEFAULT_HOST );
+		self::sftp_field( 'port', __( 'Port', 'rmd-backup-wordpress' ), (string) $sftp['port'], 'small-text', '22' );
+		self::sftp_field( 'user', __( 'User name', 'rmd-backup-wordpress' ), $sftp['user'], 'regular-text code', '' );
+		if ( SftpSettings::locked( 'password' ) ) {
+			printf( '<tr><th scope="row">%s</th><td><em>%s</em></td></tr>', esc_html__( 'Password', 'rmd-backup-wordpress' ), esc_html__( 'Set in wp-config.php', 'rmd-backup-wordpress' ) );
+		} else {
+			printf(
+				'<tr><th scope="row"><label for="rmd-bwp-sftp-password">%1$s</label></th><td><input type="password" id="rmd-bwp-sftp-password" name="sftp[password]" value="" class="regular-text" autocomplete="new-password" placeholder="%2$s"><p class="description">%3$s</p>%4$s</td></tr>',
+				esc_html__( 'Password', 'rmd-backup-wordpress' ),
+				esc_attr( '' === $sftp['password'] ? '' : __( 'unchanged', 'rmd-backup-wordpress' ) ),
+				esc_html__( 'Preferably a protocol password of this account (HiDrive: account settings), so it can be revoked on its own. Stored encrypted with the security keys of wp-config.php; empty = keep the stored one.', 'rmd-backup-wordpress' ),
+				'' === $sftp['password'] ? '' : '<label><input type="checkbox" name="sftp[forget_password]" value="1"> ' . esc_html__( 'Delete stored password', 'rmd-backup-wordpress' ) . '</label>'
+			);
+		}
+		self::sftp_field( 'path', __( 'Base folder', 'rmd-backup-wordpress' ), $sftp['path'], 'regular-text code', '', __( 'Empty = the own folder of the account (HiDrive: /users/<name>), otherwise the folder after login. Relative paths start at the folder after login.', 'rmd-backup-wordpress' ) );
+		self::sftp_field( 'folder', __( 'Folder for this site', 'rmd-backup-wordpress' ), $sftp['folder'], 'regular-text code', ArchiveName::site( home_url() ), __( 'Letters, digits, dots, hyphens. Default: the domain of the site.', 'rmd-backup-wordpress' ) );
+		printf(
+			'<tr><th scope="row">%s</th><td>%s<p class="description">%s</p></td></tr>',
+			esc_html__( 'Host key', 'rmd-backup-wordpress' ),
+			'' === $sftp['fingerprint'] ? '<em>' . esc_html__( 'not known yet', 'rmd-backup-wordpress' ) . '</em>' : '<code>' . esc_html( $sftp['fingerprint'] ) . '</code>',
+			esc_html__( 'Stored at the first connection test. Every upload checks that the server still presents this key, so a fake server cannot receive the backups.', 'rmd-backup-wordpress' )
+		);
+		echo '</tbody></table>';
+		submit_button( __( 'Save SFTP settings', 'rmd-backup-wordpress' ), 'secondary' );
+		echo '</form>';
+
+		echo '<p class="rmd-bwp-sftp-actions">';
+		printf(
+			'<form method="post" action="%1$s"><input type="hidden" name="action" value="rmd_bwp_test_sftp">%2$s<button type="submit" class="button">%3$s</button></form> ',
+			esc_url( admin_url( 'admin-post.php' ) ),
+			wp_nonce_field( 'rmd_bwp_test_sftp', '_wpnonce', true, false ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core nonce markup.
+			esc_html__( 'Test connection', 'rmd-backup-wordpress' )
+		);
+		if ( '' !== $sftp['fingerprint'] && ! SftpSettings::locked( 'fingerprint' ) ) {
+			printf(
+				'<a class="button button-link-delete rmd-bwp-confirm" href="%s">%s</a>',
+				esc_url( self::action_url( 'rmd_bwp_reset_hostkey', [] ) ),
+				esc_html__( 'Reset host key', 'rmd-backup-wordpress' )
+			);
+		}
+		echo '</p>';
+	}
+
+	private static function sftp_field( string $key, string $label, string $value, string $css_class, string $placeholder, string $description = '' ): void {
+		if ( SftpSettings::locked( $key ) ) {
+			printf(
+				'<tr><th scope="row">%s</th><td><code>%s</code><p class="description">%s</p></td></tr>',
+				esc_html( $label ),
+				esc_html( $value ),
+				esc_html__( 'Set in wp-config.php', 'rmd-backup-wordpress' )
+			);
+			return;
+		}
+		$stored = get_option( SftpSettings::OPTION, [] );
+		$raw    = is_array( $stored ) && isset( $stored[ $key ] ) && is_scalar( $stored[ $key ] ) ? (string) $stored[ $key ] : '';
+		self::text_field( $key, $label, $raw, $description, $css_class, false, '' === $placeholder ? $value : $placeholder, '', 'sftp' );
 	}
 
 	private static function text_field( string $key, string $label, string $value, string $description, string $css_class, bool $required = false, string $placeholder = '', string $row_class = '', string $group = 'profile' ): void {
@@ -691,10 +811,17 @@ final class Page {
 
 	private static function error_message( string $code ): string {
 		$messages = [
-			'name_required'  => __( 'Enter a name.', 'rmd-backup-wordpress' ),
-			'parts_required' => __( 'Select at least one part to back up.', 'rmd-backup-wordpress' ),
-			'invalid_time'   => __( 'Enter the time as HH:MM, e.g. 03:00.', 'rmd-backup-wordpress' ),
-			'invalid_email'  => __( 'The email address is not valid.', 'rmd-backup-wordpress' ),
+			'name_required'     => __( 'Enter a name.', 'rmd-backup-wordpress' ),
+			'parts_required'    => __( 'Select at least one part to back up.', 'rmd-backup-wordpress' ),
+			'invalid_time'      => __( 'Enter the time as HH:MM, e.g. 03:00.', 'rmd-backup-wordpress' ),
+			'invalid_email'     => __( 'The email address is not valid.', 'rmd-backup-wordpress' ),
+			'invalid_recipient' => __( 'The public key is not a valid age key (age1…).', 'rmd-backup-wordpress' ),
+			'pq_recipient'      => __( 'Post-quantum keys (age1pq…) are not supported yet. Create the key with age-keygen without -pq.', 'rmd-backup-wordpress' ),
+			'invalid_host'      => __( 'The server name is not valid.', 'rmd-backup-wordpress' ),
+			'invalid_port'      => __( 'The port must be a number between 1 and 65535.', 'rmd-backup-wordpress' ),
+			'invalid_user'      => __( 'The user name contains invalid characters.', 'rmd-backup-wordpress' ),
+			'invalid_path'      => __( 'The base folder must not contain "..".', 'rmd-backup-wordpress' ),
+			'invalid_folder'    => __( 'The folder name may only contain letters, digits, dots, hyphens and underscores.', 'rmd-backup-wordpress' ),
 		];
 		return $messages[ $code ] ?? $code;
 	}
@@ -706,8 +833,15 @@ final class Page {
 			delete_transient( self::ERRORS_TRANSIENT . 'message_' . get_current_user_id() );
 			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( $error ) . '</p></div>';
 		}
+		$success = get_transient( self::ERRORS_TRANSIENT . 'success_' . get_current_user_id() );
+		if ( is_string( $success ) && '' !== $success ) {
+			delete_transient( self::ERRORS_TRANSIENT . 'success_' . get_current_user_id() );
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $success ) . '</p></div>';
+		}
 
 		$messages = [
+			'sftp_saved'      => __( 'SFTP settings saved. Run "Test connection" to check them.', 'rmd-backup-wordpress' ),
+			'hostkey_reset'   => __( 'Host key reset. The next connection test stores the key the server presents.', 'rmd-backup-wordpress' ),
 			'profile_saved'   => __( 'Profile saved.', 'rmd-backup-wordpress' ),
 			'profile_copied'  => __( 'Profile duplicated.', 'rmd-backup-wordpress' ),
 			'profile_deleted' => __( 'Profile deleted.', 'rmd-backup-wordpress' ),
@@ -810,7 +944,7 @@ final class Page {
 			$type = 'text/plain; charset=utf-8';
 		} else {
 			$path = Destinations::local()->path( $file );
-			$type = 'application/zip';
+			$type = str_ends_with( $file, '.age' ) ? 'application/octet-stream' : 'application/zip';
 		}
 		if ( null === $path ) {
 			wp_die( esc_html__( 'This file does not exist.', 'rmd-backup-wordpress' ), 404 );
@@ -861,6 +995,65 @@ final class Page {
 					'rmd_bwp_notice' => 'settings_saved',
 				]
 			)
+		);
+	}
+
+	public static function save_sftp(): void {
+		self::guard( 'rmd_bwp_save_sftp' );
+		$raw    = isset( $_POST['sftp'] ) && is_array( $_POST['sftp'] ) ? wp_unslash( $_POST['sftp'] ) : []; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.NonceVerification.Missing -- Validated by SftpSettings::save(), nonce checked in guard().
+		$errors = SftpSettings::save( $raw );
+		if ( [] !== $errors ) {
+			self::fail( self::error_message( $errors[0] ), 'settings' );
+		}
+		self::redirect(
+			self::url(
+				[
+					'tab'            => 'settings',
+					'rmd_bwp_notice' => 'sftp_saved',
+				]
+			) . '#sftp'
+		);
+	}
+
+	/**
+	 * Connects, checks write access and stores the host key if none is pinned yet.
+	 */
+	public static function test_sftp(): void {
+		self::guard( 'rmd_bwp_test_sftp' );
+		$settings = SftpSettings::get();
+		try {
+			$result = ( new SftpDestination( $settings ) )->test();
+		} catch ( Throwable $e ) {
+			self::fail( wp_specialchars_decode( $e->getMessage(), ENT_QUOTES ), 'settings' );
+		}
+
+		if ( '' === $settings['fingerprint'] ) {
+			SftpSettings::save_fingerprint( $result['fingerprint'] );
+		}
+		set_transient(
+			self::ERRORS_TRANSIENT . 'success_' . get_current_user_id(),
+			sprintf(
+				/* translators: 1: folder, 2: number of backups, 3: host key fingerprint */
+				__( 'Connection works. Folder %1$s is writable and contains %2$d backups of this site. Host key: %3$s', 'rmd-backup-wordpress' ),
+				$result['directory'],
+				$result['backups'],
+				$result['fingerprint']
+			),
+			MINUTE_IN_SECONDS
+		);
+		self::redirect( self::url( [ 'tab' => 'settings' ] ) . '#sftp' );
+	}
+
+	public static function reset_hostkey(): void {
+		self::guard( 'rmd_bwp_reset_hostkey' );
+		SftpSettings::save_fingerprint( '' );
+		self::redirect(
+			self::url(
+				[
+					'tab'            => 'settings',
+					'rmd_bwp_notice' => 'hostkey_reset',
+				]
+			) . '#sftp'
 		);
 	}
 

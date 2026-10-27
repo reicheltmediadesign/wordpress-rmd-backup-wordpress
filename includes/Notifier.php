@@ -59,6 +59,9 @@ final class Notifier {
 			/* translators: 1: file name, 2: size */
 			$lines[] = sprintf( __( 'Archive: %1$s (%2$s)', 'rmd-backup-wordpress' ), $run['archive'], size_format( (int) $run['size'] ) );
 		}
+		if ( ! empty( $run['remote'] ) ) {
+			$lines[] = 'uploaded' === $run['remote'] ? __( 'Upload: done', 'rmd-backup-wordpress' ) : __( 'Upload: failed, the backup is only stored on the website', 'rmd-backup-wordpress' );
+		}
 		if ( (int) $run['warnings'] > 0 ) {
 			/* translators: %d: number of warnings */
 			$lines[] = sprintf( __( 'Warnings: %d', 'rmd-backup-wordpress' ), (int) $run['warnings'] );
