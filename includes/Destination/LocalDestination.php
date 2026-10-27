@@ -46,7 +46,7 @@ final class LocalDestination implements Destination {
 		$backups = [];
 		foreach ( (array) scandir( $dir ) as $name ) {
 			$parsed = ArchiveName::parse( (string) $name );
-			if ( null === $parsed || 'zip' !== $parsed['type'] ) {
+			if ( null === $parsed || ! ArchiveName::is_archive( (string) $name ) ) {
 				continue;
 			}
 			$path      = $dir . '/' . $name;
@@ -81,8 +81,7 @@ final class LocalDestination implements Destination {
 	 * Path of an archive, or null if the name is invalid or the file is missing.
 	 */
 	public function path( string $name ): ?string {
-		$parsed = ArchiveName::parse( $name );
-		$path   = Storage::dir( Storage::BACKUPS ) . '/' . $name;
-		return null !== $parsed && 'zip' === $parsed['type'] && is_file( $path ) ? $path : null;
+		$path = Storage::dir( Storage::BACKUPS ) . '/' . $name;
+		return ArchiveName::is_archive( $name ) && is_file( $path ) ? $path : null;
 	}
 }

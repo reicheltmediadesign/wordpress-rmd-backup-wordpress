@@ -7,6 +7,7 @@
 
 namespace RMD\BackupWordpress;
 
+use RMD\BackupWordpress\Domain\Age;
 use RMD\BackupWordpress\Domain\Profile;
 
 defined( 'ABSPATH' ) || exit;
@@ -18,7 +19,7 @@ final class Settings {
 	public const KEY_OPTION      = 'rmd_bwp_key';
 
 	/**
-	 * @return array{filename_site: bool, log_keep_days: int, log_keep_count: int, notify_email: string}
+	 * @return array{filename_site: bool, log_keep_days: int, log_keep_count: int, notify_email: string, age_recipient: string}
 	 */
 	public static function defaults(): array {
 		return [
@@ -26,11 +27,12 @@ final class Settings {
 			'log_keep_days'  => 90,
 			'log_keep_count' => 100,
 			'notify_email'   => '',
+			'age_recipient'  => '',
 		];
 	}
 
 	/**
-	 * @return array{filename_site: bool, log_keep_days: int, log_keep_count: int, notify_email: string}
+	 * @return array{filename_site: bool, log_keep_days: int, log_keep_count: int, notify_email: string, age_recipient: string}
 	 */
 	public static function get(): array {
 		$stored = get_option( self::OPTION, [] );
@@ -39,7 +41,7 @@ final class Settings {
 
 	/**
 	 * @param array<mixed> $raw
-	 * @return array{settings: array{filename_site: bool, log_keep_days: int, log_keep_count: int, notify_email: string}, errors: list<string>}
+	 * @return array{settings: array{filename_site: bool, log_keep_days: int, log_keep_count: int, notify_email: string, age_recipient: string}, errors: list<string>}
 	 */
 	public static function parse( array $raw ): array {
 		$defaults = self::defaults();
@@ -51,12 +53,19 @@ final class Settings {
 			$email    = '';
 		}
 
+		$recipient = isset( $raw['age_recipient'] ) && is_string( $raw['age_recipient'] ) ? trim( $raw['age_recipient'] ) : '';
+		if ( '' !== $recipient && ! Age::is_recipient( $recipient ) ) {
+			$errors[]  = str_starts_with( strtolower( $recipient ), 'age1pq1' ) ? 'pq_recipient' : 'invalid_recipient';
+			$recipient = '';
+		}
+
 		return [
 			'settings' => [
 				'filename_site'  => array_key_exists( 'filename_site', $raw ) ? in_array( $raw['filename_site'], [ true, 1, '1', 'on' ], true ) : $defaults['filename_site'],
 				'log_keep_days'  => self::int( $raw['log_keep_days'] ?? null, $defaults['log_keep_days'], 0, 3650 ),
 				'log_keep_count' => self::int( $raw['log_keep_count'] ?? null, $defaults['log_keep_count'], 0, 10000 ),
 				'notify_email'   => $email,
+				'age_recipient'  => $recipient,
 			],
 			'errors'   => $errors,
 		];
@@ -144,6 +153,22 @@ final class Settings {
 			$profiles[ $profile->id ] = $profile;
 		}
 		self::store( $profiles );
+	}
+
+	/**
+	 * age recipient (public key) all backups are encrypted for, or "" for none.
+	 * RMD_BWP_AGE_RECIPIENT in wp-config.php takes precedence, so it cannot be
+	 * changed from the admin screen.
+	 */
+	public static function recipient(): string {
+		if ( self::recipient_locked() ) {
+			return trim( (string) RMD_BWP_AGE_RECIPIENT );
+		}
+		return self::get()['age_recipient'];
+	}
+
+	public static function recipient_locked(): bool {
+		return defined( 'RMD_BWP_AGE_RECIPIENT' ) && is_string( RMD_BWP_AGE_RECIPIENT ) && '' !== trim( RMD_BWP_AGE_RECIPIENT );
 	}
 
 	/**

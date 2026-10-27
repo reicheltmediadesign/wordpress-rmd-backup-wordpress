@@ -4,7 +4,8 @@
  * short steps (REST requests from the admin screen, cron events or loopback
  * requests) and survives time limits.
  *
- * Phases: database → scan → archive → finalize. A finished or failed run is
+ * Phases: database → scan → archive → encrypt → finalize → upload (encrypt
+ * and upload only when configured). A finished or failed run is
  * written to the history and its state is removed.
  *
  * Only one step runs at a time (lock row in the options table). A step that
@@ -17,7 +18,9 @@
 namespace RMD\BackupWordpress\Backup;
 
 use DateTimeImmutable;
+use RMD\BackupWordpress\Destination\Destination;
 use RMD\BackupWordpress\Destination\Destinations;
+use RMD\BackupWordpress\Destination\SftpSettings;
 use RMD\BackupWordpress\Domain\ArchiveName;
 use RMD\BackupWordpress\Domain\Profile;
 use RMD\BackupWordpress\Domain\Retention;
@@ -80,6 +83,20 @@ final class Job {
 			throw new RuntimeException( esc_html__( 'Another backup is still running. Wait for it or cancel it first.', 'rmd-backup-wordpress' ) );
 		}
 
+		$recipient = Settings::recipient();
+		if ( $profile->remote ) {
+			if ( '' === $recipient ) {
+				throw new RuntimeException( esc_html__( 'Uploads to the SFTP server require encryption. Enter an age public key in the settings.', 'rmd-backup-wordpress' ) );
+			}
+			if ( ! Destinations::remote()->is_configured() ) {
+				throw new RuntimeException( esc_html__( 'The SFTP connection is not set up.', 'rmd-backup-wordpress' ) );
+			}
+		}
+
+		if ( '' !== $recipient && ! Encryptor::available() ) {
+			throw new RuntimeException( esc_html__( 'Encryption needs the PHP extension sodium, which is not active on this server. Ask the host to enable it, or remove the public key in the settings.', 'rmd-backup-wordpress' ) );
+		}
+
 		Storage::prepare();
 		$site = Settings::get()['filename_site'] ? ArchiveName::site( home_url() ) : '';
 		$id   = ArchiveName::id( new DateTimeImmutable( 'now', wp_timezone() ), $profile->id, bin2hex( random_bytes( 3 ) ), $site );
@@ -95,7 +112,14 @@ final class Job {
 			'attempts'  => 0,
 			'warnings'  => 0,
 			'messages'  => [],
+			'recipient' => $recipient,
 		];
+		if ( '' !== $recipient ) {
+			$job['encrypt'] = Encryptor::init();
+		}
+		if ( $profile->remote ) {
+			$job['upload'] = [ 'errors' => 0 ];
+		}
 
 		if ( ! wp_mkdir_p( self::tmp( $job ) ) ) {
 			throw new RuntimeException( esc_html__( 'The temporary folder could not be created.', 'rmd-backup-wordpress' ) );
@@ -103,6 +127,10 @@ final class Job {
 
 		$log->info( sprintf( 'Backup started: profile "%s" (%s), trigger: %s', $profile->name, $profile->id, $job['trigger'] ) );
 		$log->info( sprintf( 'Parts: %s', implode( ', ', $profile->parts ) ) );
+		$log->info( '' === $recipient ? 'Encryption: off' : sprintf( 'Encryption: age, recipient %s', $recipient ) );
+		if ( isset( $job['upload'] ) ) {
+			$log->info( sprintf( 'Upload: %s, folder for this site: %s', Destinations::remote()->label(), SftpSettings::get()['folder'] ) );
+		}
 		$log->info(
 			sprintf(
 				'RMD Backup WordPress %s, WordPress %s, PHP %s, memory_limit %s, max_execution_time %s, %s',
@@ -263,10 +291,16 @@ final class Job {
 		$total_size = (int) ( $scan['size'] ?? 0 );
 		$archived   = $total_size > 0 ? min( 1, (int) $archive['read'] / $total_size ) : 0;
 
+		$end      = 0.95 - ( isset( $job['encrypt'] ) ? 0.1 : 0 ) - ( isset( $job['upload'] ) ? 0.25 : 0 );
+		$encrypt  = (array) ( $job['encrypt'] ?? [] );
+		$upload   = (array) ( $job['upload'] ?? [] );
+		$size     = max( 1, (int) ( $job['size'] ?? 1 ) );
 		$progress = match ( $job['phase'] ) {
 			'database' => $db_share * min( 1, (int) $db['index'] / $tables ),
 			'scan'     => $db_share + $scan_share / 2,
-			'archive'  => $db_share + $scan_share + ( 0.95 - $db_share - $scan_share ) * $archived,
+			'archive'  => $db_share + $scan_share + ( $end - $db_share - $scan_share ) * $archived,
+			'encrypt'  => $end + 0.1 * min( 1, (int) ( $encrypt['in'] ?? 0 ) / max( 1, (int) ( $encrypt['size'] ?? 1 ) ) ),
+			'upload'   => 0.7 + 0.28 * min( 1, (int) ( $upload['offset'] ?? 0 ) / $size ),
 			default    => 0.97,
 		};
 
@@ -292,6 +326,13 @@ final class Job {
 					size_format( (int) $archive['read'] )
 				)
 				: __( 'Creating the archive …', 'rmd-backup-wordpress' ),
+			'encrypt'  => __( 'Encrypting the archive …', 'rmd-backup-wordpress' ),
+			'upload'   => sprintf(
+				/* translators: 1: uploaded size, 2: total size */
+				__( 'Uploading … %1$s of %2$s', 'rmd-backup-wordpress' ),
+				size_format( (int) ( $upload['offset'] ?? 0 ) ),
+				size_format( $size )
+			),
 			default    => __( 'Saving the archive …', 'rmd-backup-wordpress' ),
 		};
 
@@ -355,13 +396,26 @@ final class Job {
 					};
 					if ( Archiver::run( $job, $deadline, $info ) ) {
 						$log->info( isset( $job['scan'] ) ? sprintf( 'Archive complete: %s files', number_format( (int) $job['archive']['files'], 0, '', ' ' ) ) : 'Archive complete.' );
+						$job['phase'] = isset( $job['encrypt'] ) ? 'encrypt' : 'finalize';
+					}
+					break;
+
+				case 'encrypt':
+					if ( Encryptor::run( $job, $deadline ) ) {
+						$log->info( 'Archive encrypted.' );
 						$job['phase'] = 'finalize';
 					}
 					break;
 
 				case 'finalize':
 					self::finalize( $job, $profile, $log );
-					$job['phase'] = 'done';
+					$job['phase'] = isset( $job['upload'] ) ? 'upload' : 'done';
+					break;
+
+				case 'upload':
+					if ( self::upload( $job, $profile, $deadline, $log ) ) {
+						$job['phase'] = 'done';
+					}
 					break;
 
 				default:
@@ -371,32 +425,75 @@ final class Job {
 	}
 
 	/**
-	 * Hands the archive to the destinations and applies the retention rules.
+	 * Moves the archive into the backup folder and applies the retention rules.
+	 * Safe to repeat when a step died after the move.
 	 *
 	 * @param array<string, mixed> $job
 	 */
 	private static function finalize( array &$job, Profile $profile, Logger $log ): void {
-		$archive         = self::tmp( $job ) . '/' . Archiver::ARCHIVE;
-		$job['size']     = (int) filesize( $archive );
-		$job['filename'] = $job['id'] . '.zip';
+		$encrypted       = isset( $job['encrypt'] );
+		$archive         = self::tmp( $job ) . '/' . ( $encrypted ? Encryptor::FILE : Archiver::ARCHIVE );
+		$job['filename'] = $job['id'] . '.' . ( $encrypted ? ArchiveName::ENCRYPTED : ArchiveName::ZIP );
 
-		$destination = Destinations::local();
-		$destination->store( $archive, $job['filename'], $log );
+		$local  = Destinations::local();
+		$stored = $local->path( $job['filename'] );
+		if ( null === $stored || is_file( $archive ) ) {
+			$local->store( $archive, $job['filename'], $log );
+			$stored = (string) $local->path( $job['filename'] );
+		}
+		$job['size'] = (int) filesize( $stored );
 
-		foreach ( Destinations::all() as $target ) {
-			$own     = array_values( array_filter( $target->backups(), static fn( array $b ): bool => $b['profile'] === $profile->id ) );
-			$expired = Retention::expired( $own, $profile->keep_count, $profile->keep_days, time() );
-			foreach ( $expired as $name ) {
-				try {
-					$target->delete( $name );
-					$log->info( sprintf( 'Old backup deleted (%s): %s', $target->label(), $name ) );
-				} catch ( Throwable $e ) {
-					self::warn( $job, $e->getMessage() );
-				}
+		self::apply_retention( $job, $local, $profile, $log );
+		Storage::delete_tree( self::tmp( $job ) );
+	}
+
+	/**
+	 * Uploads the stored archive; network errors are retried in the next steps.
+	 *
+	 * @param array<string, mixed> $job
+	 */
+	private static function upload( array &$job, Profile $profile, float $deadline, Logger $log ): bool {
+		$remote = Destinations::remote();
+		$file   = (string) Destinations::local()->path( (string) $job['filename'] );
+
+		try {
+			if ( ! $remote->upload( $job['upload'], $file, (string) $job['filename'], $deadline, $log ) ) {
+				return false;
 			}
+		} catch ( Throwable $e ) {
+			++$job['upload']['errors'];
+			if ( $job['upload']['errors'] >= self::MAX_ATTEMPTS ) {
+				throw $e;
+			}
+			$log->warning( sprintf( 'Upload attempt %d failed, trying again: %s', $job['upload']['errors'], wp_specialchars_decode( $e->getMessage(), ENT_QUOTES ) ) );
+			return false;
 		}
 
-		Storage::delete_tree( self::tmp( $job ) );
+		$job['uploaded'] = true;
+		self::apply_retention( $job, $remote, $profile, $log );
+		return true;
+	}
+
+	/**
+	 * Deletes backups of the profile that the retention rules no longer keep.
+	 *
+	 * @param array<string, mixed> $job
+	 */
+	private static function apply_retention( array &$job, Destination $target, Profile $profile, Logger $log ): void {
+		try {
+			$own = array_values( array_filter( $target->backups(), static fn( array $b ): bool => $b['profile'] === $profile->id ) );
+		} catch ( Throwable $e ) {
+			self::warn( $job, sprintf( 'Old backups could not be listed (%s): %s', $target->label(), wp_specialchars_decode( $e->getMessage(), ENT_QUOTES ) ) );
+			return;
+		}
+		foreach ( Retention::expired( $own, $profile->keep_count, $profile->keep_days, time() ) as $name ) {
+			try {
+				$target->delete( $name );
+				$log->info( sprintf( 'Old backup deleted (%s): %s', $target->label(), $name ) );
+			} catch ( Throwable $e ) {
+				self::warn( $job, wp_specialchars_decode( $e->getMessage(), ENT_QUOTES ) );
+			}
+		}
 	}
 
 	/**
@@ -504,7 +601,8 @@ final class Job {
 			'status'       => $status,
 			'message'      => $message,
 			'size'         => (int) ( $job['size'] ?? 0 ),
-			'archive'      => 'done' === $job['phase'] ? (string) $job['filename'] : '',
+			'archive'      => isset( $job['filename'] ) && null !== Destinations::local()->path( (string) $job['filename'] ) ? (string) $job['filename'] : '',
+			'remote'       => isset( $job['upload'] ) ? ( empty( $job['uploaded'] ) ? 'failed' : 'uploaded' ) : '',
 			'warnings'     => (int) $job['warnings'],
 		];
 

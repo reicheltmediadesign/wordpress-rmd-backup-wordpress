@@ -9,7 +9,7 @@
 
 defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
 
-foreach ( [ 'rmd_bwp_settings', 'rmd_bwp_profiles', 'rmd_bwp_key', 'rmd_bwp_job', 'rmd_bwp_lock', 'rmd_bwp_cancel', 'rmd_bwp_runs', 'external_updates-rmd-backup-wordpress' ] as $rmd_bwp_option ) {
+foreach ( [ 'rmd_bwp_settings', 'rmd_bwp_profiles', 'rmd_bwp_key', 'rmd_bwp_job', 'rmd_bwp_lock', 'rmd_bwp_cancel', 'rmd_bwp_runs', 'rmd_bwp_sftp', 'external_updates-rmd-backup-wordpress' ] as $rmd_bwp_option ) {
 	delete_option( $rmd_bwp_option );
 }
 

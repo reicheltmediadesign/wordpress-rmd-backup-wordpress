@@ -11,7 +11,7 @@ final class ArchiveNameTest extends TestCase {
 
 	public function test_id_and_parse(): void {
 		$id = ArchiveName::id( new DateTimeImmutable( '2026-10-27 03:00:05' ), 'full', 'A1-b2C3x', 'example.com' );
-		self::assertSame( 'example.com_2026-10-27_030005_full_a1b2c3', $id );
+		self::assertSame( '2026-10-27_030005_example.com_full_a1b2c3', $id );
 		self::assertTrue( ArchiveName::is_id( $id ) );
 
 		self::assertSame(
@@ -44,13 +44,30 @@ final class ArchiveNameTest extends TestCase {
 		self::assertSame( '', ArchiveName::site( 'not a url' ) );
 	}
 
+	public function test_encrypted_archives(): void {
+		$parsed = ArchiveName::parse( '2026-10-27_030005_example.com_full_a1b2c3.zip.age' );
+		self::assertSame( '2026-10-27_030005_example.com_full_a1b2c3', $parsed['id'] ?? null );
+		self::assertSame( ArchiveName::ENCRYPTED, $parsed['type'] ?? null );
+		self::assertTrue( ArchiveName::is_archive( '2026-10-27_030005_example.com_full_a1b2c3.zip.age' ) );
+		self::assertTrue( ArchiveName::is_archive( '2026-10-27_030005_example.com_full_a1b2c3.zip' ) );
+		self::assertFalse( ArchiveName::is_archive( '2026-10-27_030005_example.com_full_a1b2c3.log' ) );
+		self::assertNull( ArchiveName::parse( '2026-10-27_030005_example.com_full_a1b2c3.age' ) );
+	}
+
+	public function test_site_and_profile_with_hyphens(): void {
+		$parsed = ArchiveName::parse( '2026-10-27_030005_localhost-testwordpress_content-only_a1b2c3.log' );
+		self::assertSame( 'localhost-testwordpress', $parsed['site'] ?? null );
+		self::assertSame( 'content-only', $parsed['profile'] ?? null );
+	}
+
 	public function test_rejects_everything_else(): void {
 		$names = [
 			'../2026-10-27_030005_full_a1b2c3.zip',
 			'2026-10-27_030005_full_a1b2c3.php',
 			'2026-10-27_030005_Full_a1b2c3.zip',
 			'2026-10-27_030005_full_a1b2c.zip',
-			'exa_mple.com_2026-10-27_030005_full_a1b2c3.zip',
+			'example.com_2026-10-27_030005_full_a1b2c3.zip',
+			'2026-10-27_030005_exa_mple.com_full_a1b2c3.zip',
 			'.htaccess',
 			'index.php',
 		];
