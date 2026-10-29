@@ -5,6 +5,18 @@ All notable changes to this plugin are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] – 2026-10-29
+
+### Added
+
+- SSH key login for the SFTP destination: every site creates its own ed25519 key pair; only the public key (comment `rmd-backup <domain>`) is added to the account, so a single site can be locked out by deleting its key. Works with HiDrive two-factor authentication. Download of the public key as `rmd-backup_<domain>.pub`, SHA256 and MD5 fingerprints.
+- Settings `RMD_BWP_SFTP_AUTH` and `RMD_BWP_SFTP_PRIVATE_KEY` in `wp-config.php`.
+- Site Health reports an SFTP key or password that can no longer be decrypted.
+
+### Changed
+
+- New SFTP setups log in with an SSH key. Sites upgraded from 0.1.0 with a stored password keep the password login until it is switched.
+
 ## [0.1.0] – 2026-10-27
 
 ### Added

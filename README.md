@@ -10,7 +10,7 @@ Lightweight backup plugin for WordPress. Every run creates **one zip** with the 
 - **Retention** per profile: keep the newest *n* backups and/or backups younger than *n* days. The newest backup is never deleted.
 - **Log for every run** with environment, tables, file counts, warnings, errors and duration. Viewable and downloadable in the admin; old logs are deleted automatically.
 - **Encryption** with [age](https://age-encryption.org): only your public key is stored on the site, so neither a compromised site nor a leaked off-site copy can read the backups. Decrypt with the age command line tool and your private key.
-- **Off-site copy via SFTP** (e.g. STRATO HiDrive): encrypted backups are uploaded in resumable chunks to a folder per site; the server's host key is pinned, and the retention rules apply there as well.
+- **Off-site copy via SFTP** (e.g. STRATO HiDrive): encrypted backups are uploaded in resumable chunks to a folder per site. Every site logs in with its own SSH key (works with HiDrive two-factor authentication), the server's host key is pinned, and the retention rules apply there as well.
 - **Email notification** per profile: never, only after warnings or errors, or after every run. The log is attached.
 - **Robust on shared hosting:** a run is split into short steps and continues in the background, so PHP time limits do not matter. An interrupted step is repeated from the last saved state; the archive is written with an appending zip writer instead of being rewritten on every step. Large files and formats that are compressed already (images, videos, archives) are stored without recompression.
 - **Little overhead:** no external services besides the SFTP server you configure, no large serialized options (the run history is capped at 50 entries), nothing loaded on the front end.
@@ -90,12 +90,17 @@ wp rmd-backup run full
    define( 'RMD_BWP_AGE_RECIPIENT', 'age1…' );
    ```
 
-3. **Create an SFTP account** that only reaches its own folder and has no other protocols (HiDrive: an extra user with SFTP only, and a protocol password for it).
-4. Enter server, user and password under *Settings → Upload to SFTP*, click **Test connection** (this stores the server's host key) and enable **Upload to SFTP** in the profiles.
+3. **Create an SFTP account** that only reaches its own folder and has no other protocols (HiDrive: an extra user with SFTP only).
+4. Under *Settings → Upload to SFTP* enter server and user, keep **Login: SSH key** and click **Create key pair**. The private key is created on the site and never leaves it.
+5. Click **Download public key** (`rmd-backup_<domain>.pub`; the key comment is `rmd-backup <domain>`) and add the file to the account. HiDrive: log in as owner, *Settings → Account →* the backup account *→ Open-SSH → SSH Schlüssel hinterlegen*. An account can hold many keys, one per site.
+6. Click **Test connection** (this stores the server's host key) and enable **Upload to SFTP** in the profiles.
+7. HiDrive: once all sites use keys, enable two-factor authentication for the backup account and delete its protocol passwords. Key logins keep working with 2FA; password logins would need the current code and fail in scheduled runs.
+
+To lock out a site (compromised or no longer a customer), delete only its key in the account. Every other site keeps working. **Create new key pair** replaces the key of a site; remove the old public key from the account afterwards.
 
 Every site uploads into its own folder (default: its domain). Each upload goes to `….part` first and is renamed when complete. If the server presents a different host key, the upload stops.
 
-The SFTP settings can also be set in `wp-config.php`: `RMD_BWP_SFTP_HOST`, `RMD_BWP_SFTP_PORT`, `RMD_BWP_SFTP_USER`, `RMD_BWP_SFTP_PASSWORD`, `RMD_BWP_SFTP_PATH`, `RMD_BWP_SFTP_FOLDER`, `RMD_BWP_SFTP_FINGERPRINT`.
+The SFTP settings can also be set in `wp-config.php`: `RMD_BWP_SFTP_HOST`, `RMD_BWP_SFTP_PORT`, `RMD_BWP_SFTP_USER`, `RMD_BWP_SFTP_AUTH` (`key` or `password`), `RMD_BWP_SFTP_PRIVATE_KEY` (private key without passphrase), `RMD_BWP_SFTP_PASSWORD`, `RMD_BWP_SFTP_PATH`, `RMD_BWP_SFTP_FOLDER`, `RMD_BWP_SFTP_FINGERPRINT`.
 
 Since one SFTP account serves all sites, a compromised site could delete or overwrite the archives in that account (but not read them). Keep a second copy that sites cannot reach, e.g. a Synology NAS that only downloads from the account (Cloud Sync, "download remote changes only", without deleting) and keeps snapshots.
 
@@ -167,7 +172,10 @@ The backup folder of this plugin is always left out.
 | Setting | Default | Description |
 | --- | --- | --- |
 | Server / Port | `sftp.hidrive.strato.com` / 22 | |
-| User name, Password | – | Preferably a protocol password that can be revoked on its own. Stored encrypted with the security keys of `wp-config.php`. |
+| User name | – | The backup account. |
+| Login | SSH key | **SSH key** (recommended, works with HiDrive 2FA) or **Password** for servers without key login. Sites upgraded from 0.1.0 with a stored password keep using it until you switch. |
+| SSH key of this site | – | **Create key pair**, **Download public key**, fingerprints (SHA256 and MD5) to compare with the key list of the account. Stored encrypted with the security keys of `wp-config.php`. |
+| Password | – | Only for the password login. Stored encrypted with the security keys of `wp-config.php`. |
 | Base folder | empty | Empty = the own folder of the account (HiDrive logs in at `/` and uses `/users/<name>`), otherwise the folder after login. Relative paths start at the folder after login. |
 | Folder for this site | domain of the site | Letters, digits, dots, hyphens, underscores. |
 | Host key | – | Stored by **Test connection**; every upload must see the same key. **Reset host key** forgets it. |

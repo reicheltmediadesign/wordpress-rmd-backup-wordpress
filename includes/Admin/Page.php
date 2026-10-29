@@ -17,6 +17,7 @@ use RMD\BackupWordpress\Destination\SftpDestination;
 use RMD\BackupWordpress\Destination\SftpSettings;
 use RMD\BackupWordpress\Domain\ArchiveName;
 use RMD\BackupWordpress\Domain\Profile;
+use RMD\BackupWordpress\Domain\SshKey;
 use RMD\BackupWordpress\Log\LogStore;
 use RMD\BackupWordpress\Notifier;
 use RMD\BackupWordpress\Plugin;
@@ -49,6 +50,8 @@ final class Page {
 		add_action( 'admin_post_rmd_bwp_save_sftp', [ self::class, 'save_sftp' ] );
 		add_action( 'admin_post_rmd_bwp_test_sftp', [ self::class, 'test_sftp' ] );
 		add_action( 'admin_post_rmd_bwp_reset_hostkey', [ self::class, 'reset_hostkey' ] );
+		add_action( 'admin_post_rmd_bwp_generate_key', [ self::class, 'generate_key' ] );
+		add_action( 'admin_post_rmd_bwp_download_pubkey', [ self::class, 'download_pubkey' ] );
 		add_filter( 'plugin_action_links_' . RMD_BWP_BASENAME, [ self::class, 'action_links' ] );
 	}
 
@@ -598,14 +601,27 @@ final class Page {
 		self::sftp_field( 'host', __( 'Server', 'rmd-backup-wordpress' ), $sftp['host'], 'regular-text code', SftpSettings::DEFAULT_HOST );
 		self::sftp_field( 'port', __( 'Port', 'rmd-backup-wordpress' ), (string) $sftp['port'], 'small-text', '22' );
 		self::sftp_field( 'user', __( 'User name', 'rmd-backup-wordpress' ), $sftp['user'], 'regular-text code', '' );
-		if ( SftpSettings::locked( 'password' ) ) {
-			printf( '<tr><th scope="row">%s</th><td><em>%s</em></td></tr>', esc_html__( 'Password', 'rmd-backup-wordpress' ), esc_html__( 'Set in wp-config.php', 'rmd-backup-wordpress' ) );
+		if ( SftpSettings::locked( 'auth' ) ) {
+			printf( '<tr><th scope="row">%s</th><td><code>%s</code><input type="hidden" id="rmd-bwp-auth" value="%s"></td></tr>', esc_html__( 'Login', 'rmd-backup-wordpress' ), esc_html( $sftp['auth'] ), esc_attr( $sftp['auth'] ) );
 		} else {
 			printf(
-				'<tr><th scope="row"><label for="rmd-bwp-sftp-password">%1$s</label></th><td><input type="password" id="rmd-bwp-sftp-password" name="sftp[password]" value="" class="regular-text" autocomplete="new-password" placeholder="%2$s"><p class="description">%3$s</p>%4$s</td></tr>',
+				'<tr><th scope="row"><label for="rmd-bwp-auth">%1$s</label></th><td><select id="rmd-bwp-auth" name="sftp[auth]"><option value="key" %2$s>%3$s</option><option value="password" %4$s>%5$s</option></select></td></tr>',
+				esc_html__( 'Login', 'rmd-backup-wordpress' ),
+				selected( $sftp['auth'], SftpSettings::AUTH_KEY, false ),
+				esc_html__( 'SSH key (recommended)', 'rmd-backup-wordpress' ),
+				selected( $sftp['auth'], SftpSettings::AUTH_PASSWORD, false ),
+				esc_html__( 'Password', 'rmd-backup-wordpress' )
+			);
+		}
+		self::render_ssh_key_row();
+		if ( SftpSettings::locked( 'password' ) ) {
+			printf( '<tr class="rmd-bwp-auth-row rmd-bwp-auth-password"><th scope="row">%s</th><td><em>%s</em></td></tr>', esc_html__( 'Password', 'rmd-backup-wordpress' ), esc_html__( 'Set in wp-config.php', 'rmd-backup-wordpress' ) );
+		} else {
+			printf(
+				'<tr class="rmd-bwp-auth-row rmd-bwp-auth-password"><th scope="row"><label for="rmd-bwp-sftp-password">%1$s</label></th><td><input type="password" id="rmd-bwp-sftp-password" name="sftp[password]" value="" class="regular-text" autocomplete="new-password" placeholder="%2$s"><p class="description">%3$s</p>%4$s</td></tr>',
 				esc_html__( 'Password', 'rmd-backup-wordpress' ),
 				esc_attr( '' === $sftp['password'] ? '' : __( 'unchanged', 'rmd-backup-wordpress' ) ),
-				esc_html__( 'Preferably a protocol password of this account (HiDrive: account settings), so it can be revoked on its own. Stored encrypted with the security keys of wp-config.php; empty = keep the stored one.', 'rmd-backup-wordpress' ),
+				esc_html__( 'Only for servers without SSH key login. With two-factor authentication on HiDrive the password login does not work. Stored encrypted with the security keys of wp-config.php; empty = keep the stored one.', 'rmd-backup-wordpress' ),
 				'' === $sftp['password'] ? '' : '<label><input type="checkbox" name="sftp[forget_password]" value="1"> ' . esc_html__( 'Delete stored password', 'rmd-backup-wordpress' ) . '</label>'
 			);
 		}
@@ -636,6 +652,54 @@ final class Page {
 			);
 		}
 		echo '</p>';
+	}
+
+	/**
+	 * Public key of this site with download and (re)generate links.
+	 */
+	private static function render_ssh_key_row(): void {
+		$public = SftpSettings::public_key();
+		echo '<tr class="rmd-bwp-auth-row rmd-bwp-auth-key"><th scope="row">' . esc_html__( 'SSH key of this site', 'rmd-backup-wordpress' ) . '</th><td>';
+
+		if ( SftpSettings::private_key_unreadable() ) {
+			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'The stored SSH key can no longer be decrypted (the security keys in wp-config.php changed). Create a new key pair and add its public key to the account.', 'rmd-backup-wordpress' ) . '</p></div>';
+		}
+
+		if ( '' === $public ) {
+			if ( SftpSettings::locked( 'private_key' ) ) {
+				echo '<p>' . esc_html__( 'RMD_BWP_SFTP_PRIVATE_KEY in wp-config.php is not a valid private key.', 'rmd-backup-wordpress' ) . '</p>';
+			} else {
+				echo '<p>' . esc_html__( 'This site has no key pair yet. The private key is created here and never leaves this site; only the public key is added to the account.', 'rmd-backup-wordpress' ) . '</p>';
+				printf( '<p><a class="button" href="%s">%s</a></p>', esc_url( self::action_url( 'rmd_bwp_generate_key', [] ) ), esc_html__( 'Create key pair', 'rmd-backup-wordpress' ) );
+			}
+			echo '</td></tr>';
+			return;
+		}
+
+		$fingerprints = SshKey::fingerprints( $public );
+		printf( '<textarea class="large-text code rmd-bwp-pubkey" rows="2" readonly>%s</textarea>', esc_textarea( $public ) );
+		printf(
+			'<p class="description">%s<br><code>%s</code><br><code>MD5:%s</code></p>',
+			esc_html__( 'Fingerprints (to compare with the key list of the account):', 'rmd-backup-wordpress' ),
+			esc_html( $fingerprints['sha256'] ),
+			esc_html( $fingerprints['md5'] )
+		);
+		printf(
+			'<p><a class="button" href="%s">%s</a>',
+			esc_url( self::action_url( 'rmd_bwp_download_pubkey', [] ) ),
+			esc_html__( 'Download public key', 'rmd-backup-wordpress' )
+		);
+		if ( ! SftpSettings::locked( 'private_key' ) ) {
+			printf(
+				' <a class="button rmd-bwp-confirm" data-confirm="%s" href="%s">%s</a>',
+				esc_attr__( 'Create a new key pair? The current key stops working for this site. Remove its public key from the account afterwards.', 'rmd-backup-wordpress' ),
+				esc_url( self::action_url( 'rmd_bwp_generate_key', [] ) ),
+				esc_html__( 'Create new key pair', 'rmd-backup-wordpress' )
+			);
+		}
+		echo '</p>';
+		echo '<p class="description">' . esc_html__( 'HiDrive: log in as owner, Settings → Account → choose the backup account → Open-SSH → "SSH Schlüssel hinterlegen", upload the downloaded .pub file. Each site has its own key; to lock out a site, delete only its key there. The key login also works with two-factor authentication.', 'rmd-backup-wordpress' ) . '</p>';
+		echo '</td></tr>';
 	}
 
 	private static function sftp_field( string $key, string $label, string $value, string $css_class, string $placeholder, string $description = '' ): void {
@@ -842,6 +906,7 @@ final class Page {
 		$messages = [
 			'sftp_saved'      => __( 'SFTP settings saved. Run "Test connection" to check them.', 'rmd-backup-wordpress' ),
 			'hostkey_reset'   => __( 'Host key reset. The next connection test stores the key the server presents.', 'rmd-backup-wordpress' ),
+			'key_generated'   => __( 'Key pair created. Download the public key, add it to the SFTP account and run "Test connection".', 'rmd-backup-wordpress' ),
 			'profile_saved'   => __( 'Profile saved.', 'rmd-backup-wordpress' ),
 			'profile_copied'  => __( 'Profile duplicated.', 'rmd-backup-wordpress' ),
 			'profile_deleted' => __( 'Profile deleted.', 'rmd-backup-wordpress' ),
@@ -1042,6 +1107,40 @@ final class Page {
 			MINUTE_IN_SECONDS
 		);
 		self::redirect( self::url( [ 'tab' => 'settings' ] ) . '#sftp' );
+	}
+
+	public static function generate_key(): void {
+		self::guard( 'rmd_bwp_generate_key' );
+		if ( SftpSettings::locked( 'private_key' ) ) {
+			self::fail( __( 'The SSH key is set in wp-config.php.', 'rmd-backup-wordpress' ), 'settings' );
+		}
+		try {
+			SftpSettings::generate_key();
+		} catch ( Throwable $e ) {
+			self::fail( wp_specialchars_decode( $e->getMessage(), ENT_QUOTES ), 'settings' );
+		}
+		self::redirect(
+			self::url(
+				[
+					'tab'            => 'settings',
+					'rmd_bwp_notice' => 'key_generated',
+				]
+			) . '#sftp'
+		);
+	}
+
+	public static function download_pubkey(): void {
+		self::guard( 'rmd_bwp_download_pubkey' );
+		$public = SftpSettings::public_key();
+		if ( '' === $public ) {
+			wp_die( esc_html__( 'This site has no SSH key yet.', 'rmd-backup-wordpress' ), 404 );
+		}
+		nocache_headers();
+		header( 'Content-Type: text/plain; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="rmd-backup_' . ArchiveName::site( home_url() ) . '.pub"' );
+		header( 'X-Content-Type-Options: nosniff' );
+		echo $public . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Plain-text file download.
+		exit;
 	}
 
 	public static function reset_hostkey(): void {

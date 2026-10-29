@@ -9,6 +9,7 @@ namespace RMD\BackupWordpress;
 
 use RMD\BackupWordpress\Backup\Encryptor;
 use RMD\BackupWordpress\Backup\Runner;
+use RMD\BackupWordpress\Destination\SftpSettings;
 use RMD\BackupWordpress\Log\LogStore;
 
 defined( 'ABSPATH' ) || exit;
@@ -51,6 +52,14 @@ final class SiteHealth {
 				__( 'The backup folder is not writable', 'rmd-backup-wordpress' ),
 				/* translators: %s: folder path */
 				sprintf( __( 'Backups are written to %s. Create the folder or fix its permissions.', 'rmd-backup-wordpress' ), $root )
+			);
+		}
+		if ( SftpSettings::private_key_unreadable() || SftpSettings::password_unreadable() ) {
+			return self::result(
+				'rmd_bwp_storage',
+				'critical',
+				__( 'The SFTP login can no longer be decrypted', 'rmd-backup-wordpress' ),
+				__( 'The security keys in wp-config.php changed, so the stored SSH key or password cannot be read. Uploads fail until you create a new key pair (and add it to the account) or enter the password again.', 'rmd-backup-wordpress' )
 			);
 		}
 		if ( '' !== Settings::recipient() && ! Encryptor::available() ) {

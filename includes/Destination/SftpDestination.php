@@ -13,8 +13,10 @@
 
 namespace RMD\BackupWordpress\Destination;
 
+use InvalidArgumentException;
 use phpseclib3\Net\SFTP;
 use RMD\BackupWordpress\Domain\ArchiveName;
+use RMD\BackupWordpress\Domain\SshKey;
 use RMD\BackupWordpress\Log\Logger;
 use RuntimeException;
 use Throwable;
@@ -32,7 +34,7 @@ final class SftpDestination implements RemoteDestination {
 	private ?SFTP $connection = null;
 
 	/**
-	 * @param array{host: string, port: int, user: string, password: string, path: string, folder: string, fingerprint: string} $settings
+	 * @param array{host: string, port: int, user: string, auth: string, private_key: string, password: string, path: string, folder: string, fingerprint: string} $settings
 	 */
 	public function __construct( private readonly array $settings ) {}
 
@@ -45,7 +47,8 @@ final class SftpDestination implements RemoteDestination {
 	}
 
 	public function is_configured(): bool {
-		return '' !== $this->settings['host'] && '' !== $this->settings['user'] && '' !== $this->settings['password'];
+		$secret = SftpSettings::AUTH_KEY === $this->settings['auth'] ? $this->settings['private_key'] : $this->settings['password'];
+		return '' !== $this->settings['host'] && '' !== $this->settings['user'] && '' !== $secret;
 	}
 
 	/**
@@ -222,8 +225,17 @@ final class SftpDestination implements RemoteDestination {
 			);
 		}
 
-		if ( ! $sftp->login( $this->settings['user'], $this->settings['password'] ) ) {
-			throw new RuntimeException( esc_html( self::error( $sftp, __( 'The SFTP login failed. Check user name and password.', 'rmd-backup-wordpress' ) ) ) );
+		if ( SftpSettings::AUTH_KEY === $this->settings['auth'] ) {
+			try {
+				$credential = SshKey::load( $this->settings['private_key'] );
+			} catch ( InvalidArgumentException $e ) {
+				throw new RuntimeException( esc_html__( 'The stored SSH key is not valid. Create a new key pair in the settings.', 'rmd-backup-wordpress' ) );
+			}
+			if ( ! $sftp->login( $this->settings['user'], $credential ) ) {
+				throw new RuntimeException( esc_html( self::error( $sftp, __( 'The SFTP login with the SSH key failed. Is the public key of this site added to the account?', 'rmd-backup-wordpress' ) ) ) );
+			}
+		} elseif ( ! $sftp->login( $this->settings['user'], $this->settings['password'] ) ) {
+			throw new RuntimeException( esc_html( self::error( $sftp, __( 'The SFTP login failed. Check user name and password. With two-factor authentication on HiDrive only the SSH key login works.', 'rmd-backup-wordpress' ) ) ) );
 		}
 
 		$this->connection = $sftp;
