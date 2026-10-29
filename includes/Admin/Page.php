@@ -428,8 +428,8 @@ final class Page {
 
 		echo '<h3>' . esc_html__( 'Retention', 'rmd-backup-wordpress' ) . '</h3>';
 		echo '<table class="form-table" role="presentation"><tbody>';
-		self::number_field( 'keep_count', __( 'Keep backups', 'rmd-backup-wordpress' ), (int) $values['keep_count'], 0, 1000, __( 'Number of newest backups of this profile to keep. 0 = no limit.', 'rmd-backup-wordpress' ) );
-		self::number_field( 'keep_days', __( 'Keep for days', 'rmd-backup-wordpress' ), (int) $values['keep_days'], 0, 3650, __( 'Delete backups of this profile that are older. 0 = no limit. The newest backup is always kept.', 'rmd-backup-wordpress' ) );
+		self::number_field( 'keep_count', __( 'Keep backups', 'rmd-backup-wordpress' ), (int) $values['keep_count'], 0, 1000, __( 'Number of newest backups of this profile to keep on this site. 0 = no limit.', 'rmd-backup-wordpress' ) );
+		self::number_field( 'keep_days', __( 'Keep for days', 'rmd-backup-wordpress' ), (int) $values['keep_days'], 0, 3650, __( 'Delete older backups of this profile on this site. 0 = no limit. The newest backup is always kept.', 'rmd-backup-wordpress' ) );
 		echo '</tbody></table>';
 
 		echo '<h3>' . esc_html__( 'Off-site copy', 'rmd-backup-wordpress' ) . '</h3>';
@@ -440,9 +440,11 @@ final class Page {
 			__( 'Upload to SFTP', 'rmd-backup-wordpress' ),
 			(bool) $values['remote'],
 			$remote_ready
-				? __( 'Also upload the encrypted backup to the SFTP server from the settings. The retention rules above also apply there.', 'rmd-backup-wordpress' )
+				? __( 'Also upload the encrypted backup to the SFTP server from the settings.', 'rmd-backup-wordpress' )
 				: __( 'Needs an encryption key and a tested SFTP connection in the settings first.', 'rmd-backup-wordpress' )
 		);
+		self::number_field( 'remote_keep_count', __( 'Keep on SFTP server', 'rmd-backup-wordpress' ), (int) $values['remote_keep_count'], 0, 1000, __( 'Number of newest backups of this profile to keep on the SFTP server. 0 = no limit. Keep more than on the site, so a copy that pulls from the server (e.g. a NAS) has time to fetch them.', 'rmd-backup-wordpress' ) );
+		self::number_field( 'remote_keep_days', __( 'Keep on SFTP server for days', 'rmd-backup-wordpress' ), (int) $values['remote_keep_days'], 0, 3650, __( '0 = no limit. The newest backup is always kept.', 'rmd-backup-wordpress' ) );
 		echo '</tbody></table>';
 
 		echo '<h3>' . esc_html__( 'Notification', 'rmd-backup-wordpress' ) . '</h3>';
@@ -848,14 +850,23 @@ final class Page {
 	}
 
 	private static function keep_label( Profile $profile ): string {
-		$parts = [];
-		if ( $profile->keep_count > 0 ) {
-			/* translators: %d: number of backups */
-			$parts[] = sprintf( _n( 'newest %d', 'newest %d', $profile->keep_count, 'rmd-backup-wordpress' ), $profile->keep_count );
+		$label = self::retention_label( $profile->keep_count, $profile->keep_days );
+		if ( ! $profile->remote ) {
+			return $label;
 		}
-		if ( $profile->keep_days > 0 ) {
+		/* translators: 1: retention on the site, 2: retention on the SFTP server */
+		return sprintf( __( 'site: %1$s; SFTP: %2$s', 'rmd-backup-wordpress' ), $label, self::retention_label( $profile->remote_keep_count, $profile->remote_keep_days ) );
+	}
+
+	private static function retention_label( int $count, int $days ): string {
+		$parts = [];
+		if ( $count > 0 ) {
+			/* translators: %d: number of backups */
+			$parts[] = sprintf( _n( 'newest %d', 'newest %d', $count, 'rmd-backup-wordpress' ), $count );
+		}
+		if ( $days > 0 ) {
 			/* translators: %d: number of days */
-			$parts[] = sprintf( _n( '%d day', '%d days', $profile->keep_days, 'rmd-backup-wordpress' ), $profile->keep_days );
+			$parts[] = sprintf( _n( '%d day', '%d days', $days, 'rmd-backup-wordpress' ), $days );
 		}
 		return [] === $parts ? __( 'all', 'rmd-backup-wordpress' ) : implode( ', ', $parts );
 	}

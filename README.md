@@ -7,7 +7,7 @@ Lightweight backup plugin for WordPress. Every run creates **one zip** with the 
 - **One zip per run** with the files, the database dump (`database.sql.gz`) and `backup-info.json` (site address, WordPress, PHP and database version, table prefix, profile).
 - **Profiles** for what to back up. Prepared on activation: *Full backup*, *Database only*, *Files only*, *Content only (wp-content)* and *Uploads only*. Each profile combines the parts database, WordPress core, `wp-config.php`, plugins, themes, uploads and the rest of `wp-content`, with its own exclusion rules in `.gitignore` syntax.
 - **Schedules** per profile: hourly, daily, weekly or monthly at a set time in the site's time zone, or only manually.
-- **Retention** per profile: keep the newest *n* backups and/or backups younger than *n* days. The newest backup is never deleted.
+- **Retention** per profile, separately for the site (default: 3) and the SFTP server (default: 7): keep the newest *n* backups and/or backups younger than *n* days. The newest backup is never deleted.
 - **Log for every run** with environment, tables, file counts, warnings, errors and duration. Viewable and downloadable in the admin; old logs are deleted automatically.
 - **Encryption** with [age](https://age-encryption.org): only your public key is stored on the site, so neither a compromised site nor a leaked off-site copy can read the backups. Decrypt with the age command line tool and your private key.
 - **Off-site copy via SFTP** (e.g. STRATO HiDrive): encrypted backups are uploaded in resumable chunks to a folder per site. Every site logs in with its own SSH key (works with HiDrive two-factor authentication), the server's host key is pinned, and the retention rules apply there as well.
@@ -102,7 +102,7 @@ Every site uploads into its own folder (default: its domain). Each upload goes t
 
 The SFTP settings can also be set in `wp-config.php`: `RMD_BWP_SFTP_HOST`, `RMD_BWP_SFTP_PORT`, `RMD_BWP_SFTP_USER`, `RMD_BWP_SFTP_AUTH` (`key` or `password`), `RMD_BWP_SFTP_PRIVATE_KEY` (private key without passphrase), `RMD_BWP_SFTP_PASSWORD`, `RMD_BWP_SFTP_PATH`, `RMD_BWP_SFTP_FOLDER`, `RMD_BWP_SFTP_FINGERPRINT`.
 
-Since one SFTP account serves all sites, a compromised site could delete or overwrite the archives in that account (but not read them). Keep a second copy that sites cannot reach, e.g. a Synology NAS that only downloads from the account (Cloud Sync, "download remote changes only", without deleting) and keeps snapshots.
+Since one SFTP account serves all sites, a compromised site could delete or overwrite the archives in that account (but not read them). Keep a second copy that sites cannot reach, e.g. a Synology NAS that only downloads from the account (Cloud Sync, "download remote changes only", without deleting) and keeps snapshots. Such a copy also keeps backups longer than the SFTP server: the plugin only cleans up the server (*Keep on SFTP server*), the long-term archive cleans up itself.
 
 ### Restoring a backup
 
@@ -128,9 +128,11 @@ The plugin does not restore backups; do it by hand:
 | Run | Only manually | Hourly, daily, weekly or monthly. |
 | Time | 03:00 | In the site's time zone; for hourly runs only the minute counts. |
 | Day of the week / month | Monday / 1 | For weekly / monthly runs (day 1–28). |
-| Keep backups | 7 | Newest backups of this profile to keep. 0 = no limit. |
-| Keep for days | 0 | Delete older backups of this profile. 0 = no limit. |
-| Upload to SFTP | off | Also upload the encrypted backup to the SFTP server. Needs encryption and a tested connection. Retention applies there too. |
+| Keep backups | 3 | Newest backups of this profile to keep on the site. 0 = no limit. |
+| Keep for days | 0 | Delete older backups of this profile on the site. 0 = no limit. |
+| Upload to SFTP | off | Also upload the encrypted backup to the SFTP server. Needs encryption and a tested connection. |
+| Keep on SFTP server | 7 | Newest backups of this profile to keep on the SFTP server. Keep more than on the site, so a copy that pulls from the server (e.g. a NAS) has time to fetch them. 0 = no limit. |
+| Keep on SFTP server for days | 0 | 0 = no limit. The newest backup is always kept. |
 | Send email | Only after warnings or errors | Never, only after warnings or errors, or after every run. |
 | Recipient | empty | Empty = default recipient from the settings, otherwise the administration email address. |
 

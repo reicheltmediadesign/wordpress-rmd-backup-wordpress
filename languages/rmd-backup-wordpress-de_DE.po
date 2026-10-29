@@ -1,7 +1,7 @@
 # German translation of RMD Backup WordPress.
 msgid ""
 msgstr ""
-"Project-Id-Version: RMD Backup WordPress 0.2.0\n"
+"Project-Id-Version: RMD Backup WordPress 0.3.0\n"
 "Report-Msgid-Bugs-To: https://github.com/reicheltmediadesign/wordpress-rmd-backup-wordpress/issues\n"
 "Language: de_DE\n"
 "MIME-Version: 1.0\n"
@@ -236,14 +236,14 @@ msgstr "Aufbewahrung"
 msgid "Keep backups"
 msgstr "Backups behalten"
 
-msgid "Number of newest backups of this profile to keep. 0 = no limit."
-msgstr "Anzahl der neuesten Backups dieses Profils, die behalten werden. 0 = unbegrenzt."
+msgid "Number of newest backups of this profile to keep on this site. 0 = no limit."
+msgstr "Anzahl der neuesten Backups dieses Profils, die auf dieser Website behalten werden. 0 = unbegrenzt."
 
 msgid "Keep for days"
 msgstr "Tage behalten"
 
-msgid "Delete backups of this profile that are older. 0 = no limit. The newest backup is always kept."
-msgstr "Ältere Backups dieses Profils löschen. 0 = unbegrenzt. Das neueste Backup bleibt immer erhalten."
+msgid "Delete older backups of this profile on this site. 0 = no limit. The newest backup is always kept."
+msgstr "Ältere Backups dieses Profils auf dieser Website löschen. 0 = unbegrenzt. Das neueste Backup bleibt immer erhalten."
 
 msgid "Off-site copy"
 msgstr "Externe Kopie"
@@ -251,11 +251,23 @@ msgstr "Externe Kopie"
 msgid "Upload to SFTP"
 msgstr "Per SFTP hochladen"
 
-msgid "Also upload the encrypted backup to the SFTP server from the settings. The retention rules above also apply there."
-msgstr "Das verschlüsselte Backup zusätzlich auf den SFTP-Server aus den Einstellungen hochladen. Die Aufbewahrungsregeln oben gelten dort ebenfalls."
+msgid "Also upload the encrypted backup to the SFTP server from the settings."
+msgstr "Das verschlüsselte Backup zusätzlich auf den SFTP-Server aus den Einstellungen hochladen."
 
 msgid "Needs an encryption key and a tested SFTP connection in the settings first."
 msgstr "Dafür werden zuerst ein Verschlüsselungsschlüssel und eine getestete SFTP-Verbindung in den Einstellungen benötigt."
+
+msgid "Keep on SFTP server"
+msgstr "Auf dem SFTP-Server behalten"
+
+msgid "Number of newest backups of this profile to keep on the SFTP server. 0 = no limit. Keep more than on the site, so a copy that pulls from the server (e.g. a NAS) has time to fetch them."
+msgstr "Anzahl der neuesten Backups dieses Profils, die auf dem SFTP-Server behalten werden. 0 = unbegrenzt. Mehr als auf der Website behalten, damit eine Kopie, die vom Server abholt (z. B. ein NAS), genug Zeit dafür hat."
+
+msgid "Keep on SFTP server for days"
+msgstr "Auf dem SFTP-Server Tage behalten"
+
+msgid "0 = no limit. The newest backup is always kept."
+msgstr "0 = unbegrenzt. Das neueste Backup bleibt immer erhalten."
 
 msgid "Notification"
 msgstr "Benachrichtigung"
@@ -508,6 +520,9 @@ msgstr "Wöchentlich am %1$s um %2$s"
 
 msgid "Monthly on day %1$d at %2$s"
 msgstr "Monatlich am %1$d. um %2$s"
+
+msgid "site: %1$s; SFTP: %2$s"
+msgstr "Website: %1$s; SFTP: %2$s"
 
 msgid "newest %d"
 msgid_plural "newest %d"

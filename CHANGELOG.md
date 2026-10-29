@@ -5,6 +5,20 @@ All notable changes to this plugin are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] – 2026-10-29
+
+### Added
+
+- Separate retention for the SFTP server per profile (*Keep on SFTP server*, default 7 backups, and *for days*), so the off-site copy can keep more than the site.
+
+### Changed
+
+- Profiles keep 3 backups on the site by default instead of 7.
+
+### Upgrading
+
+- Profiles that still use the old default of 7 are set to 3 on the site. The SFTP server keeps 7 as before. Profiles with another number stay as they are.
+
 ## [0.2.0] – 2026-10-29
 
 ### Added

@@ -16,7 +16,37 @@ final class ProfileTest extends TestCase {
 		self::assertSame( 'manual', $profile->schedule );
 		self::assertFalse( $profile->is_scheduled() );
 		self::assertTrue( $profile->has_files() );
+		self::assertSame( 3, $profile->keep_count );
+		self::assertFalse( $profile->remote );
+		self::assertSame( 7, $profile->remote_keep_count );
+		self::assertSame( 0, $profile->remote_keep_days );
+	}
+
+	public function test_remote_retention_is_separate(): void {
+		$profile = Profile::parse(
+			[
+				'name'              => 'Nightly',
+				'remote'            => '1',
+				'keep_count'        => '2',
+				'remote_keep_count' => '14',
+				'remote_keep_days'  => '60',
+			]
+		)['profile'];
+
+		self::assertTrue( $profile->remote );
+		self::assertSame( 2, $profile->keep_count );
+		self::assertSame( 14, $profile->remote_keep_count );
+		self::assertSame( 60, $profile->remote_keep_days );
+	}
+
+	public function test_profiles_from_0_2_get_remote_defaults(): void {
+		$stored = Profile::parse( [ 'name' => 'Old' ] )['profile']->to_array();
+		unset( $stored['remote_keep_count'], $stored['remote_keep_days'] );
+		$stored['keep_count'] = 7;
+
+		$profile = Profile::parse( $stored )['profile'];
 		self::assertSame( 7, $profile->keep_count );
+		self::assertSame( 7, $profile->remote_keep_count );
 	}
 
 	public function test_invalid_values_fall_back_and_are_reported(): void {
@@ -38,7 +68,7 @@ final class ProfileTest extends TestCase {
 		self::assertSame( [], $profile->parts );
 		self::assertSame( 'manual', $profile->schedule );
 		self::assertSame( '03:00', $profile->time );
-		self::assertSame( 7, $profile->keep_count );
+		self::assertSame( 3, $profile->keep_count );
 		self::assertSame( 7, $profile->weekday );
 		self::assertSame( 'problems', $profile->notify );
 		self::assertSame( '', $profile->notify_email );

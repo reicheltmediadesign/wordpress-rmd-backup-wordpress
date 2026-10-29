@@ -16,6 +16,12 @@ final class Profile {
 
 	public const FILE_PARTS = [ 'core', 'config', 'plugins', 'themes', 'uploads', 'content' ];
 
+	/** Backups kept on the site by default; the remote copy keeps more (remote_keep_count). */
+	public const DEFAULT_KEEP = 3;
+
+	/** Default of profiles before 0.3.0; Upgrade lowers it to DEFAULT_KEEP. */
+	public const LEGACY_KEEP = 7;
+
 	public const SCHEDULES = [ 'manual', 'hourly', 'daily', 'weekly', 'monthly' ];
 
 	/** Notification: none, only when a run ended with warnings or errors, after every run. */
@@ -59,7 +65,9 @@ final class Profile {
 		public readonly int $keep_days,
 		public readonly string $notify,
 		public readonly string $notify_email,
-		public readonly bool $remote
+		public readonly bool $remote,
+		public readonly int $remote_keep_count,
+		public readonly int $remote_keep_days
 	) {}
 
 	/**
@@ -78,11 +86,13 @@ final class Profile {
 			'time'               => '03:00',
 			'weekday'            => 1,
 			'monthday'           => 1,
-			'keep_count'         => 7,
+			'keep_count'         => self::DEFAULT_KEEP,
 			'keep_days'          => 0,
 			'notify'             => 'problems',
 			'notify_email'       => '',
 			'remote'             => false,
+			'remote_keep_count'  => 7,
+			'remote_keep_days'   => 0,
 		];
 	}
 
@@ -171,7 +181,9 @@ final class Profile {
 			self::int( $raw, 'keep_days', 0, 3650 ),
 			self::choice( $raw, 'notify', self::NOTIFY_MODES ),
 			$email,
-			self::bool( $raw, 'remote' )
+			self::bool( $raw, 'remote' ),
+			self::int( $raw, 'remote_keep_count', 0, 1000 ),
+			self::int( $raw, 'remote_keep_days', 0, 3650 )
 		);
 
 		return [
