@@ -1,7 +1,7 @@
 # German translation of RMD Backup WordPress.
 msgid ""
 msgstr ""
-"Project-Id-Version: RMD Backup WordPress 0.1.0\n"
+"Project-Id-Version: RMD Backup WordPress 0.2.0\n"
 "Report-Msgid-Bugs-To: https://github.com/reicheltmediadesign/wordpress-rmd-backup-wordpress/issues\n"
 "Language: de_DE\n"
 "MIME-Version: 1.0\n"
@@ -374,6 +374,12 @@ msgstr "Port"
 msgid "User name"
 msgstr "Benutzername"
 
+msgid "Login"
+msgstr "Anmeldung"
+
+msgid "SSH key (recommended)"
+msgstr "SSH-Schlüssel (empfohlen)"
+
 msgid "Password"
 msgstr "Passwort"
 
@@ -383,8 +389,8 @@ msgstr "In der wp-config.php gesetzt"
 msgid "unchanged"
 msgstr "unverändert"
 
-msgid "Preferably a protocol password of this account (HiDrive: account settings), so it can be revoked on its own. Stored encrypted with the security keys of wp-config.php; empty = keep the stored one."
-msgstr "Am besten ein Protokoll-Passwort dieses Kontos (HiDrive: Kontoeinstellungen), damit es sich einzeln widerrufen lässt. Wird mit den Sicherheitsschlüsseln der wp-config.php verschlüsselt gespeichert; leer = gespeichertes beibehalten."
+msgid "Only for servers without SSH key login. With two-factor authentication on HiDrive the password login does not work. Stored encrypted with the security keys of wp-config.php; empty = keep the stored one."
+msgstr "Nur für Server ohne Anmeldung per SSH-Schlüssel. Mit Zwei-Faktor-Authentifizierung bei HiDrive funktioniert die Anmeldung per Passwort nicht. Wird mit den Sicherheitsschlüsseln der wp-config.php verschlüsselt gespeichert; leer = gespeichertes beibehalten."
 
 msgid "Delete stored password"
 msgstr "Gespeichertes Passwort löschen"
@@ -418,6 +424,36 @@ msgstr "Verbindung testen"
 
 msgid "Reset host key"
 msgstr "Host-Schlüssel zurücksetzen"
+
+msgid "SSH key of this site"
+msgstr "SSH-Schlüssel dieser Website"
+
+msgid "The stored SSH key can no longer be decrypted (the security keys in wp-config.php changed). Create a new key pair and add its public key to the account."
+msgstr "Der gespeicherte SSH-Schlüssel lässt sich nicht mehr entschlüsseln (die Sicherheitsschlüssel in der wp-config.php haben sich geändert). Erzeuge ein neues Schlüsselpaar und hinterlege dessen öffentlichen Schlüssel beim Konto."
+
+msgid "RMD_BWP_SFTP_PRIVATE_KEY in wp-config.php is not a valid private key."
+msgstr "RMD_BWP_SFTP_PRIVATE_KEY in der wp-config.php ist kein gültiger privater Schlüssel."
+
+msgid "This site has no key pair yet. The private key is created here and never leaves this site; only the public key is added to the account."
+msgstr "Diese Website hat noch kein Schlüsselpaar. Der private Schlüssel wird hier erzeugt und verlässt die Website nie; beim Konto wird nur der öffentliche Schlüssel hinterlegt."
+
+msgid "Create key pair"
+msgstr "Schlüsselpaar erzeugen"
+
+msgid "Fingerprints (to compare with the key list of the account):"
+msgstr "Fingerprints (zum Abgleich mit der Schlüsselliste des Kontos):"
+
+msgid "Download public key"
+msgstr "Öffentlichen Schlüssel herunterladen"
+
+msgid "Create a new key pair? The current key stops working for this site. Remove its public key from the account afterwards."
+msgstr "Neues Schlüsselpaar erzeugen? Der bisherige Schlüssel funktioniert für diese Website dann nicht mehr. Lösche danach seinen öffentlichen Schlüssel beim Konto."
+
+msgid "Create new key pair"
+msgstr "Neues Schlüsselpaar erzeugen"
+
+msgid "HiDrive: log in as owner, Settings → Account → choose the backup account → Open-SSH → \"SSH Schlüssel hinterlegen\", upload the downloaded .pub file. Each site has its own key; to lock out a site, delete only its key there. The key login also works with two-factor authentication."
+msgstr "HiDrive: als Owner anmelden, Einstellungen → Konto → Backup-Konto wählen → Open-SSH → „SSH Schlüssel hinterlegen“, die heruntergeladene .pub-Datei hochladen. Jede Website hat ihren eigenen Schlüssel; um eine Website auszusperren, nur deren Schlüssel dort löschen. Die Anmeldung per Schlüssel funktioniert auch mit Zwei-Faktor-Authentifizierung."
 
 msgid "WordPress core (wp-admin, wp-includes, files in the main folder)"
 msgstr "WordPress-Kern (wp-admin, wp-includes, Dateien im Hauptordner)"
@@ -531,6 +567,9 @@ msgstr "SFTP-Einstellungen gespeichert. Prüfe sie mit „Verbindung testen“."
 msgid "Host key reset. The next connection test stores the key the server presents."
 msgstr "Host-Schlüssel zurückgesetzt. Der nächste Verbindungstest speichert den Schlüssel, den der Server vorlegt."
 
+msgid "Key pair created. Download the public key, add it to the SFTP account and run \"Test connection\"."
+msgstr "Schlüsselpaar erzeugt. Lade den öffentlichen Schlüssel herunter, hinterlege ihn beim SFTP-Konto und führe „Verbindung testen“ aus."
+
 msgid "Profile saved."
 msgstr "Profil gespeichert."
 
@@ -557,6 +596,12 @@ msgstr "Diese Datei existiert nicht."
 
 msgid "Connection works. Folder %1$s is writable and contains %2$d backups of this site. Host key: %3$s"
 msgstr "Verbindung funktioniert. Der Ordner %1$s ist beschreibbar und enthält %2$d Backups dieser Website. Host-Schlüssel: %3$s"
+
+msgid "The SSH key is set in wp-config.php."
+msgstr "Der SSH-Schlüssel ist in der wp-config.php gesetzt."
+
+msgid "This site has no SSH key yet."
+msgstr "Diese Website hat noch keinen SSH-Schlüssel."
 
 msgid "You are not allowed to do this."
 msgstr "Du darfst das nicht tun."
@@ -660,8 +705,14 @@ msgstr "Keine Verbindung zu %1$s: %2$s"
 msgid "The host key of the SFTP server has changed (expected %1$s, received %2$s). The upload was stopped. If the provider changed its key, reset the host key in the settings."
 msgstr "Der Host-Schlüssel des SFTP-Servers hat sich geändert (erwartet %1$s, erhalten %2$s). Der Upload wurde gestoppt. Falls der Anbieter seinen Schlüssel geändert hat, setze den Host-Schlüssel in den Einstellungen zurück."
 
-msgid "The SFTP login failed. Check user name and password."
-msgstr "Die SFTP-Anmeldung ist fehlgeschlagen. Prüfe Benutzername und Passwort."
+msgid "The stored SSH key is not valid. Create a new key pair in the settings."
+msgstr "Der gespeicherte SSH-Schlüssel ist ungültig. Erzeuge in den Einstellungen ein neues Schlüsselpaar."
+
+msgid "The SFTP login with the SSH key failed. Is the public key of this site added to the account?"
+msgstr "Die SFTP-Anmeldung mit dem SSH-Schlüssel ist fehlgeschlagen. Ist der öffentliche Schlüssel dieser Website beim Konto hinterlegt?"
+
+msgid "The SFTP login failed. Check user name and password. With two-factor authentication on HiDrive only the SSH key login works."
+msgstr "Die SFTP-Anmeldung ist fehlgeschlagen. Prüfe Benutzername und Passwort. Mit Zwei-Faktor-Authentifizierung bei HiDrive funktioniert nur die Anmeldung per SSH-Schlüssel."
 
 msgid "The folder %s could not be created on the SFTP server."
 msgstr "Der Ordner %s konnte auf dem SFTP-Server nicht angelegt werden."
@@ -746,6 +797,12 @@ msgstr "Der Backup-Ordner ist nicht beschreibbar"
 
 msgid "Backups are written to %s. Create the folder or fix its permissions."
 msgstr "Backups werden nach %s geschrieben. Lege den Ordner an oder korrigiere seine Berechtigungen."
+
+msgid "The SFTP login can no longer be decrypted"
+msgstr "Die SFTP-Anmeldedaten lassen sich nicht mehr entschlüsseln"
+
+msgid "The security keys in wp-config.php changed, so the stored SSH key or password cannot be read. Uploads fail until you create a new key pair (and add it to the account) or enter the password again."
+msgstr "Die Sicherheitsschlüssel in der wp-config.php haben sich geändert, daher lassen sich gespeicherter SSH-Schlüssel oder Passwort nicht lesen. Uploads schlagen fehl, bis du ein neues Schlüsselpaar erzeugst (und beim Konto hinterlegst) oder das Passwort neu eingibst."
 
 msgid "Backups cannot be encrypted"
 msgstr "Backups können nicht verschlüsselt werden"

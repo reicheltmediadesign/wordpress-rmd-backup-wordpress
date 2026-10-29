@@ -1,6 +1,7 @@
 /**
  * Runs a backup step by step through the REST API and shows its progress.
- * Also shows the schedule fields that belong to the chosen interval.
+ * Also shows the schedule fields of the chosen interval and the SFTP login fields
+ * of the chosen login method.
  */
 ( function () {
 	'use strict';
@@ -16,7 +17,7 @@
 
 	document.addEventListener( 'click', ( event ) => {
 		const confirmLink = event.target.closest( '.rmd-bwp-confirm' );
-		if ( confirmLink && ! window.confirm( t.confirmDelete ) ) {
+		if ( confirmLink && ! window.confirm( confirmLink.dataset.confirm || t.confirmDelete ) ) {
 			event.preventDefault();
 			return;
 		}
@@ -37,6 +38,17 @@
 		};
 		schedule.addEventListener( 'change', update );
 		update();
+	}
+
+	const auth = document.getElementById( 'rmd-bwp-auth' );
+	if ( auth ) {
+		const updateAuth = () => {
+			document.querySelectorAll( '.rmd-bwp-auth-row' ).forEach( ( row ) => {
+				row.hidden = ! row.classList.contains( 'rmd-bwp-auth-' + auth.value );
+			} );
+		};
+		auth.addEventListener( 'change', updateAuth );
+		updateAuth();
 	}
 
 	if ( panel && config.status ) {
