@@ -443,7 +443,7 @@ final class Job {
 		}
 		$job['size'] = (int) filesize( $stored );
 
-		self::apply_retention( $job, $local, $profile, $log );
+		self::apply_retention( $job, $local, $profile->id, $profile->keep_count, $profile->keep_days, $log );
 		Storage::delete_tree( self::tmp( $job ) );
 	}
 
@@ -470,7 +470,7 @@ final class Job {
 		}
 
 		$job['uploaded'] = true;
-		self::apply_retention( $job, $remote, $profile, $log );
+		self::apply_retention( $job, $remote, $profile->id, $profile->remote_keep_count, $profile->remote_keep_days, $log );
 		return true;
 	}
 
@@ -479,14 +479,14 @@ final class Job {
 	 *
 	 * @param array<string, mixed> $job
 	 */
-	private static function apply_retention( array &$job, Destination $target, Profile $profile, Logger $log ): void {
+	private static function apply_retention( array &$job, Destination $target, string $profile_id, int $keep_count, int $keep_days, Logger $log ): void {
 		try {
-			$own = array_values( array_filter( $target->backups(), static fn( array $b ): bool => $b['profile'] === $profile->id ) );
+			$own = array_values( array_filter( $target->backups(), static fn( array $b ): bool => $b['profile'] === $profile_id ) );
 		} catch ( Throwable $e ) {
 			self::warn( $job, sprintf( 'Old backups could not be listed (%s): %s', $target->label(), wp_specialchars_decode( $e->getMessage(), ENT_QUOTES ) ) );
 			return;
 		}
-		foreach ( Retention::expired( $own, $profile->keep_count, $profile->keep_days, time() ) as $name ) {
+		foreach ( Retention::expired( $own, $keep_count, $keep_days, time() ) as $name ) {
 			try {
 				$target->delete( $name );
 				$log->info( sprintf( 'Old backup deleted (%s): %s', $target->label(), $name ) );

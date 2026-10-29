@@ -26,6 +26,7 @@ final class Plugin {
 		self::$booted = true;
 
 		add_action( 'init', [ self::class, 'load_textdomain' ], 1 );
+		add_action( 'init', [ Upgrade::class, 'run' ], 5 );
 
 		Updater::init();
 		Runner::init();
@@ -47,6 +48,7 @@ final class Plugin {
 
 	public static function activate(): void {
 		Settings::install_presets();
+		Upgrade::run();
 		Runner::schedule_all();
 		try {
 			Storage::prepare();
