@@ -5,6 +5,17 @@ All notable changes to this plugin are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.4.0] – 2026-10-30
+
+### Changed
+
+- SFTP uploads go to the base folder `backups` by default, on HiDrive `/users/<name>/backups/<domain>/`, so a sync tool can take exactly this folder.
+- Relative base folders now start in the own folder of the account (`/users/<name>` on HiDrive) instead of the login folder; `.` means the own folder itself.
+
+### Upgrading
+
+- Sites with an empty base folder used `/users/<name>/<domain>/` until now. New backups go to `/users/<name>/backups/<domain>/`. Move the existing site folders into `backups/` on the server (e.g. in the HiDrive web interface), otherwise the old backups there are no longer cleaned up.
+
 ## [0.3.0] – 2026-10-29
 
 ### Added

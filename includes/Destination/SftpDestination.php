@@ -52,17 +52,24 @@ final class SftpDestination implements RemoteDestination {
 	}
 
 	/**
-	 * Folder for this site's archives: <base>/<folder>. The base is the
-	 * configured path (relative to the login folder unless absolute). Without
-	 * one, the account's own folder is used: HiDrive logs in at "/", where only
-	 * /users/<name> is writable, so that folder wins when it exists.
+	 * Folder for this site's archives: <home>/<base>/<folder>, by default
+	 * /users/<name>/backups/<domain> on HiDrive. Relative base folders start in
+	 * the account's own folder: HiDrive logs in at "/", where only
+	 * /users/<name> is writable, so that folder is used when it exists (else
+	 * the login folder). "." means the own folder itself; an absolute base
+	 * folder is used as it is.
 	 */
 	public function directory(): string {
-		$path = rtrim( $this->settings['path'], '/' );
-		if ( '' === $path && null !== $this->connection && $this->connection->is_dir( '/users/' . $this->settings['user'] ) ) {
-			$path = '/users/' . $this->settings['user'];
+		$base  = rtrim( $this->settings['path'], '/' );
+		$parts = [];
+		if ( ! str_starts_with( $base, '/' ) && null !== $this->connection && $this->connection->is_dir( '/users/' . $this->settings['user'] ) ) {
+			$parts[] = '/users/' . $this->settings['user'];
 		}
-		return ( '' === $path ? '' : $path . '/' ) . $this->settings['folder'];
+		if ( '' !== $base && '.' !== $base ) {
+			$parts[] = $base;
+		}
+		$parts[] = $this->settings['folder'];
+		return implode( '/', $parts );
 	}
 
 	/**

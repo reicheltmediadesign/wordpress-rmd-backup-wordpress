@@ -4,7 +4,7 @@ Tags: backup, database backup, scheduled backup, cron, zip
 Requires at least: 6.8
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.3.0
+Stable tag: 0.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -41,6 +41,9 @@ Unpack the zip, upload the files into the WordPress folder and import database.s
 In wp-content/rmd-backup-wordpress/backups, protected by deny rules. Define RMD_BWP_STORAGE_DIR in wp-config.php to use a folder outside the web root.
 
 == Changelog ==
+
+= 0.4.0 =
+* Changed: SFTP uploads go to the base folder "backups" by default (HiDrive: /users/<name>/backups/<domain>/). Move existing site folders there.
 
 = 0.3.0 =
 * New: separate retention for the SFTP server (default 7).
