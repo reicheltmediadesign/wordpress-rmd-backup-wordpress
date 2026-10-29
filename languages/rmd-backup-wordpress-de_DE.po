@@ -1,7 +1,7 @@
 # German translation of RMD Backup WordPress.
 msgid ""
 msgstr ""
-"Project-Id-Version: RMD Backup WordPress 0.3.0\n"
+"Project-Id-Version: RMD Backup WordPress 0.4.0\n"
 "Report-Msgid-Bugs-To: https://github.com/reicheltmediadesign/wordpress-rmd-backup-wordpress/issues\n"
 "Language: de_DE\n"
 "MIME-Version: 1.0\n"
@@ -410,8 +410,8 @@ msgstr "Gespeichertes Passwort löschen"
 msgid "Base folder"
 msgstr "Basisordner"
 
-msgid "Empty = the own folder of the account (HiDrive: /users/<name>), otherwise the folder after login. Relative paths start at the folder after login."
-msgstr "Leer = eigener Ordner des Kontos (HiDrive: /users/<name>), sonst der Ordner nach dem Login. Relative Pfade beginnen beim Ordner nach dem Login."
+msgid "Folder for the backups of all sites, inside the own folder of the account (HiDrive: /users/<name>/backups). Empty = backups, \".\" = the own folder itself, a path starting with \"/\" is used as it is."
+msgstr "Ordner für die Backups aller Websites, im eigenen Ordner des Kontos (HiDrive: /users/<name>/backups). Leer = backups, „.“ = der eigene Ordner selbst, ein Pfad mit „/“ am Anfang wird unverändert verwendet."
 
 msgid "Folder for this site"
 msgstr "Ordner für diese Website"

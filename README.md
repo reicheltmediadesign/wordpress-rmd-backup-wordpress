@@ -98,7 +98,7 @@ wp rmd-backup run full
 
 To lock out a site (compromised or no longer a customer), delete only its key in the account. Every other site keeps working. **Create new key pair** replaces the key of a site; remove the old public key from the account afterwards.
 
-Every site uploads into its own folder (default: its domain). Each upload goes to `….part` first and is renamed when complete. If the server presents a different host key, the upload stops.
+Every site uploads into its own folder (default: its domain) below the base folder `backups`, on HiDrive `/users/<name>/backups/<domain>/`. Each upload goes to `….part` first and is renamed when complete. If the server presents a different host key, the upload stops.
 
 The SFTP settings can also be set in `wp-config.php`: `RMD_BWP_SFTP_HOST`, `RMD_BWP_SFTP_PORT`, `RMD_BWP_SFTP_USER`, `RMD_BWP_SFTP_AUTH` (`key` or `password`), `RMD_BWP_SFTP_PRIVATE_KEY` (private key without passphrase), `RMD_BWP_SFTP_PASSWORD`, `RMD_BWP_SFTP_PATH`, `RMD_BWP_SFTP_FOLDER`, `RMD_BWP_SFTP_FINGERPRINT`.
 
@@ -178,7 +178,7 @@ The backup folder of this plugin is always left out.
 | Login | SSH key | **SSH key** (recommended, works with HiDrive 2FA) or **Password** for servers without key login. Sites upgraded from 0.1.0 with a stored password keep using it until you switch. |
 | SSH key of this site | – | **Create key pair**, **Download public key**, fingerprints (SHA256 and MD5) to compare with the key list of the account. Stored encrypted with the security keys of `wp-config.php`. |
 | Password | – | Only for the password login. Stored encrypted with the security keys of `wp-config.php`. |
-| Base folder | empty | Empty = the own folder of the account (HiDrive logs in at `/` and uses `/users/<name>`), otherwise the folder after login. Relative paths start at the folder after login. |
+| Base folder | `backups` | Folder for the backups of all sites, inside the own folder of the account (HiDrive logs in at `/`, the own folder is `/users/<name>`). `.` = the own folder itself, a path starting with `/` is used as it is. Point a sync tool (e.g. a NAS) at exactly this folder. |
 | Folder for this site | domain of the site | Letters, digits, dots, hyphens, underscores. |
 | Host key | – | Stored by **Test connection**; every upload must see the same key. **Reset host key** forgets it. |
 

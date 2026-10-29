@@ -30,6 +30,9 @@ final class SftpSettings {
 
 	public const DEFAULT_HOST = 'sftp.hidrive.strato.com';
 
+	/** Base folder in the account, so a sync tool can take exactly this folder. */
+	public const DEFAULT_PATH = 'backups';
+
 	public const AUTH_KEY      = 'key';
 	public const AUTH_PASSWORD = 'password';
 
@@ -76,7 +79,7 @@ final class SftpSettings {
 			'auth'        => $values['auth'],
 			'private_key' => $values['private_key'],
 			'password'    => $values['password'],
-			'path'        => $values['path'],
+			'path'        => '' === $values['path'] ? self::DEFAULT_PATH : $values['path'],
 			'folder'      => '' === $values['folder'] ? ArchiveName::site( home_url() ) : $values['folder'],
 			'fingerprint' => $values['fingerprint'],
 		];

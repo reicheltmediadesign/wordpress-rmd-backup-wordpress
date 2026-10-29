@@ -627,7 +627,7 @@ final class Page {
 				'' === $sftp['password'] ? '' : '<label><input type="checkbox" name="sftp[forget_password]" value="1"> ' . esc_html__( 'Delete stored password', 'rmd-backup-wordpress' ) . '</label>'
 			);
 		}
-		self::sftp_field( 'path', __( 'Base folder', 'rmd-backup-wordpress' ), $sftp['path'], 'regular-text code', '', __( 'Empty = the own folder of the account (HiDrive: /users/<name>), otherwise the folder after login. Relative paths start at the folder after login.', 'rmd-backup-wordpress' ) );
+		self::sftp_field( 'path', __( 'Base folder', 'rmd-backup-wordpress' ), $sftp['path'], 'regular-text code', SftpSettings::DEFAULT_PATH, __( 'Folder for the backups of all sites, inside the own folder of the account (HiDrive: /users/<name>/backups). Empty = backups, "." = the own folder itself, a path starting with "/" is used as it is.', 'rmd-backup-wordpress' ) );
 		self::sftp_field( 'folder', __( 'Folder for this site', 'rmd-backup-wordpress' ), $sftp['folder'], 'regular-text code', ArchiveName::site( home_url() ), __( 'Letters, digits, dots, hyphens. Default: the domain of the site.', 'rmd-backup-wordpress' ) );
 		printf(
 			'<tr><th scope="row">%s</th><td>%s<p class="description">%s</p></td></tr>',
