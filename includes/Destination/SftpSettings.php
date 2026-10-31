@@ -140,14 +140,14 @@ final class SftpSettings {
 	}
 
 	/**
-	 * Saves the form. An empty password keeps the stored one. Changing host
-	 * or port forgets the pinned host key. The private key is only changed by
-	 * generate_key().
+	 * Validates the form against the stored values. An empty password keeps
+	 * the stored one. Changing host or port forgets the pinned host key. The
+	 * private key is only changed by generate_key().
 	 *
 	 * @param array<mixed> $raw
-	 * @return list<string> Error codes.
+	 * @return array{settings: array<string, string>, errors: list<string>}
 	 */
-	public static function save( array $raw ): array {
+	public static function parse( array $raw ): array {
 		$stored = self::stored();
 		$errors = [];
 		$value  = static fn( string $key ): string => isset( $raw[ $key ] ) && is_scalar( $raw[ $key ] ) ? trim( (string) $raw[ $key ] ) : '';
@@ -193,9 +193,8 @@ final class SftpSettings {
 			$fingerprint = '';
 		}
 
-		update_option(
-			self::OPTION,
-			[
+		return [
+			'settings' => [
 				'host'        => $host,
 				'port'        => $port,
 				'user'        => $user,
@@ -206,9 +205,17 @@ final class SftpSettings {
 				'folder'      => $folder,
 				'fingerprint' => $fingerprint,
 			],
-			false
-		);
-		return $errors;
+			'errors'   => $errors,
+		];
+	}
+
+	/**
+	 * Stores settings returned by parse().
+	 *
+	 * @param array<string, string> $settings
+	 */
+	public static function store( array $settings ): void {
+		update_option( self::OPTION, $settings, false );
 	}
 
 	public static function save_fingerprint( string $fingerprint ): void {

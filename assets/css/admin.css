@@ -3,7 +3,8 @@
  * Classes: .rmd-bwp (page), .rmd-bwp-run, .rmd-bwp-progress (run panel,
  * data-status = running|success|warning|error|cancelled), .rmd-bwp-bar,
  * .rmd-bwp-table, .rmd-bwp-badge-<status>, .rmd-bwp-log (log view),
- * .rmd-bwp-pubkey (public SSH key in the SFTP settings).
+ * .rmd-bwp-pubkey (public SSH key in the SFTP settings), .rmd-bwp-setup
+ * (setup steps on the settings tab).
  */
 
 .rmd-bwp .nav-tab-wrapper {
@@ -57,6 +58,10 @@
 .rmd-bwp-table .num {
 	text-align: right;
 	white-space: nowrap;
+}
+
+.rmd-bwp-setup ol {
+	margin: 0 0 8px 2em;
 }
 
 .rmd-bwp-actions {

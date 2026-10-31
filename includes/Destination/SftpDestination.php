@@ -74,7 +74,7 @@ final class SftpDestination implements RemoteDestination {
 
 	/**
 	 * Connects without a pinned key, checks login and write access and returns
-	 * the server's host key fingerprint. Used by "Test connection".
+	 * the server's host key fingerprint. Used by "Save and test connection".
 	 *
 	 * @return array{fingerprint: string, directory: string, backups: int}
 	 */
@@ -200,7 +200,7 @@ final class SftpDestination implements RemoteDestination {
 			throw new RuntimeException( esc_html__( 'The SFTP connection is not set up.', 'rmd-backup-wordpress' ) );
 		}
 		if ( $pinned && '' === $this->settings['fingerprint'] ) {
-			throw new RuntimeException( esc_html__( 'The host key of the SFTP server is not known yet. Run "Test connection" in the settings first.', 'rmd-backup-wordpress' ) );
+			throw new RuntimeException( esc_html__( 'The host key of the SFTP server is not known yet. Click "Save and test connection" in the settings first.', 'rmd-backup-wordpress' ) );
 		}
 
 		try {

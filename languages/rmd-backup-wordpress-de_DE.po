@@ -85,6 +85,29 @@ msgstr "Profil"
 msgid "Back up now"
 msgstr "Jetzt sichern"
 
+msgid "Scheduled backups"
+msgstr "Geplante Backups"
+
+msgid "No profile runs on a schedule."
+msgstr "Kein Profil läuft zeitgesteuert."
+
+msgid "Set a schedule in a profile"
+msgstr "Zeitplan in einem Profil festlegen"
+
+msgid "Next run"
+msgstr "Nächster Lauf"
+
+#. translators: %s: time span, e.g. "5 hours"
+msgid "in %s"
+msgstr "in %s"
+
+#. translators: %s: time span, e.g. "5 hours"
+msgid "overdue for %s"
+msgstr "seit %s überfällig"
+
+msgid "SFTP"
+msgstr "SFTP"
+
 msgid "Stored backups"
 msgstr "Gespeicherte Backups"
 
@@ -428,11 +451,8 @@ msgstr "noch nicht bekannt"
 msgid "Stored at the first connection test. Every upload checks that the server still presents this key, so a fake server cannot receive the backups."
 msgstr "Wird beim ersten Verbindungstest gespeichert. Jeder Upload prüft, dass der Server weiterhin diesen Schlüssel vorlegt, damit kein gefälschter Server die Backups erhält."
 
-msgid "Save SFTP settings"
-msgstr "SFTP-Einstellungen speichern"
-
-msgid "Test connection"
-msgstr "Verbindung testen"
+msgid "Save and test connection"
+msgstr "Speichern und Verbindung testen"
 
 msgid "Reset host key"
 msgstr "Host-Schlüssel zurücksetzen"
@@ -576,14 +596,11 @@ msgstr "Der Basisordner darf kein „..“ enthalten."
 msgid "The folder name may only contain letters, digits, dots, hyphens and underscores."
 msgstr "Der Ordnername darf nur Buchstaben, Ziffern, Punkte, Bindestriche und Unterstriche enthalten."
 
-msgid "SFTP settings saved. Run \"Test connection\" to check them."
-msgstr "SFTP-Einstellungen gespeichert. Prüfe sie mit „Verbindung testen“."
+msgid "Settings saved and host key reset. The next connection test stores the key the server presents."
+msgstr "Einstellungen gespeichert und Host-Schlüssel zurückgesetzt. Der nächste Verbindungstest speichert den Schlüssel, den der Server vorlegt."
 
-msgid "Host key reset. The next connection test stores the key the server presents."
-msgstr "Host-Schlüssel zurückgesetzt. Der nächste Verbindungstest speichert den Schlüssel, den der Server vorlegt."
-
-msgid "Key pair created. Download the public key, add it to the SFTP account and run \"Test connection\"."
-msgstr "Schlüsselpaar erzeugt. Lade den öffentlichen Schlüssel herunter, hinterlege ihn beim SFTP-Konto und führe „Verbindung testen“ aus."
+msgid "Settings saved and key pair created. Download the public key, add it to the SFTP account and click \"Save and test connection\"."
+msgstr "Einstellungen gespeichert und Schlüsselpaar erzeugt. Lade den öffentlichen Schlüssel herunter, hinterlege ihn beim SFTP-Konto und klicke auf „Speichern und Verbindung testen“."
 
 msgid "Profile saved."
 msgstr "Profil gespeichert."
@@ -609,8 +626,9 @@ msgstr "%s (Kopie)"
 msgid "This file does not exist."
 msgstr "Diese Datei existiert nicht."
 
-msgid "Connection works. Folder %1$s is writable and contains %2$d backups of this site. Host key: %3$s"
-msgstr "Verbindung funktioniert. Der Ordner %1$s ist beschreibbar und enthält %2$d Backups dieser Website. Host-Schlüssel: %3$s"
+#. translators: 1: folder, 2: number of backups, 3: host key fingerprint
+msgid "Settings saved. Connection works. Folder %1$s is writable and contains %2$d backups of this site. Host key: %3$s"
+msgstr "Einstellungen gespeichert. Verbindung funktioniert. Der Ordner %1$s ist beschreibbar und enthält %2$d Backups dieser Website. Host-Schlüssel: %3$s"
 
 msgid "The SSH key is set in wp-config.php."
 msgstr "Der SSH-Schlüssel ist in der wp-config.php gesetzt."
@@ -711,8 +729,8 @@ msgstr "Die Testdatei konnte nicht geschrieben und gelöscht werden."
 msgid "Invalid file name."
 msgstr "Ungültiger Dateiname."
 
-msgid "The host key of the SFTP server is not known yet. Run \"Test connection\" in the settings first."
-msgstr "Der Host-Schlüssel des SFTP-Servers ist noch nicht bekannt. Führe zuerst „Verbindung testen“ in den Einstellungen aus."
+msgid "The host key of the SFTP server is not known yet. Click \"Save and test connection\" in the settings first."
+msgstr "Der Host-Schlüssel des SFTP-Servers ist noch nicht bekannt. Klicke zuerst in den Einstellungen auf „Speichern und Verbindung testen“."
 
 msgid "No connection to %1$s: %2$s"
 msgstr "Keine Verbindung zu %1$s: %2$s"
@@ -863,3 +881,31 @@ msgstr "Die Datei konnte nicht gelesen werden."
 
 msgid "Could not write %s."
 msgstr "%s konnte nicht geschrieben werden."
+
+#. translators: %s: error message
+msgid "Settings saved, but the connection test failed: %s"
+msgstr "Einstellungen gespeichert, aber der Verbindungstest ist fehlgeschlagen: %s"
+
+msgid "Save the settings and forget the host key? The next connection test stores the key the server presents."
+msgstr "Einstellungen speichern und Host-Schlüssel vergessen? Der nächste Verbindungstest speichert den Schlüssel, den der Server vorlegt."
+
+msgid "Setting up"
+msgstr "Einrichtung"
+
+msgid "Under \"Encryption\" enter your age public key."
+msgstr "Trage unter „Verschlüsselung“ deinen öffentlichen age-Schlüssel ein."
+
+msgid "Under \"Upload to SFTP\" enter server and user and click \"Create key pair\". This also saves everything else on this page."
+msgstr "Trage unter „Upload per SFTP“ Server und Benutzer ein und klicke auf „Schlüsselpaar erzeugen“. Dabei wird auch alles andere auf dieser Seite gespeichert."
+
+msgid "Download the public key and add it to the SFTP account."
+msgstr "Lade den öffentlichen Schlüssel herunter und hinterlege ihn beim SFTP-Konto."
+
+msgid "Click \"Save and test connection\". This stores the host key of the server."
+msgstr "Klicke auf „Speichern und Verbindung testen“. Dabei wird der Host-Schlüssel des Servers gespeichert."
+
+msgid "Enable \"Upload to SFTP\" in the profiles."
+msgstr "Aktiviere „Per SFTP hochladen“ in den Profilen."
+
+msgid "Without an off-site copy only step 1 is needed."
+msgstr "Ohne externe Kopie reicht Schritt 1."
