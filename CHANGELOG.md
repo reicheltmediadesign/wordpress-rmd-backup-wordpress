@@ -5,6 +5,19 @@ All notable changes to this plugin are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.5.0] – 2026-10-31
+
+### Added
+
+- *Backups* tab: section "Scheduled backups" with every scheduled profile, its next run (soonest first, overdue runs marked), SFTP upload and last result.
+- *Settings* tab: setup steps until encryption (and, with an SFTP user, a successful connection test) is set up.
+
+### Changed
+
+- *Settings* tab is one form with one **Save settings** button. Before, the general part and the SFTP part had their own buttons, and saving one discarded unsaved changes in the other.
+- **Test connection** became **Save and test connection**; **Create key pair** and **Reset host key** save the page first, so entered values are no longer lost.
+- Invalid SFTP values no longer save the valid fields of the form; nothing is saved and all errors are shown.
+
 ## [0.4.0] – 2026-10-30
 
 ### Changed

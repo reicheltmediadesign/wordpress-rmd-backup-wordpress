@@ -47,10 +47,6 @@ final class Page {
 		add_action( 'admin_post_rmd_bwp_delete_backup', [ self::class, 'delete_backup' ] );
 		add_action( 'admin_post_rmd_bwp_delete_log', [ self::class, 'delete_log' ] );
 		add_action( 'admin_post_rmd_bwp_save_settings', [ self::class, 'save_settings' ] );
-		add_action( 'admin_post_rmd_bwp_save_sftp', [ self::class, 'save_sftp' ] );
-		add_action( 'admin_post_rmd_bwp_test_sftp', [ self::class, 'test_sftp' ] );
-		add_action( 'admin_post_rmd_bwp_reset_hostkey', [ self::class, 'reset_hostkey' ] );
-		add_action( 'admin_post_rmd_bwp_generate_key', [ self::class, 'generate_key' ] );
 		add_action( 'admin_post_rmd_bwp_download_pubkey', [ self::class, 'download_pubkey' ] );
 		add_filter( 'plugin_action_links_' . RMD_BWP_BASENAME, [ self::class, 'action_links' ] );
 	}
@@ -193,6 +189,8 @@ final class Page {
 		echo '</div>';
 		echo '<div id="rmd-bwp-progress" class="rmd-bwp-progress" hidden></div>';
 
+		self::render_scheduled( $profiles );
+
 		$backups = Destinations::local()->backups();
 		echo '<h2>' . esc_html__( 'Stored backups', 'rmd-backup-wordpress' ) . '</h2>';
 		if ( [] === $backups ) {
@@ -234,6 +232,77 @@ final class Page {
 			return;
 		}
 		self::runs_table( $runs, false );
+	}
+
+	/**
+	 * Profiles with a schedule, soonest run first.
+	 *
+	 * @param array<string, Profile> $profiles
+	 */
+	private static function render_scheduled( array $profiles ): void {
+		echo '<h2>' . esc_html__( 'Scheduled backups', 'rmd-backup-wordpress' ) . '</h2>';
+
+		$scheduled = [];
+		foreach ( $profiles as $profile ) {
+			if ( $profile->is_scheduled() ) {
+				$scheduled[] = [
+					'profile' => $profile,
+					'next'    => Runner::next_run( $profile->id ),
+				];
+			}
+		}
+		if ( [] === $scheduled ) {
+			printf(
+				'<p>%s <a href="%s">%s</a></p>',
+				esc_html__( 'No profile runs on a schedule.', 'rmd-backup-wordpress' ),
+				esc_url( self::url( [ 'tab' => 'profiles' ] ) ),
+				esc_html__( 'Set a schedule in a profile', 'rmd-backup-wordpress' )
+			);
+			return;
+		}
+		usort( $scheduled, static fn( array $a, array $b ): int => ( $a['next'] ?? PHP_INT_MAX ) <=> ( $b['next'] ?? PHP_INT_MAX ) );
+
+		$now = time();
+		echo '<table class="widefat striped rmd-bwp-table"><thead><tr>';
+		echo '<th>' . esc_html__( 'Next run', 'rmd-backup-wordpress' ) . '</th>';
+		echo '<th>' . esc_html__( 'Profile', 'rmd-backup-wordpress' ) . '</th>';
+		echo '<th>' . esc_html__( 'Schedule', 'rmd-backup-wordpress' ) . '</th>';
+		echo '<th>' . esc_html__( 'Last run', 'rmd-backup-wordpress' ) . '</th>';
+		echo '</tr></thead><tbody>';
+		foreach ( $scheduled as $entry ) {
+			$profile = $entry['profile'];
+			$next    = $entry['next'];
+			$last    = LogStore::last( $profile->id );
+			if ( null === $next ) {
+				$when = '–';
+			} else {
+				$when = esc_html( self::date( $next ) ) . '<div class="rmd-bwp-message">' . esc_html(
+					$next > $now
+						/* translators: %s: time span, e.g. "5 hours" */
+						? sprintf( __( 'in %s', 'rmd-backup-wordpress' ), human_time_diff( $now, $next ) )
+						/* translators: %s: time span, e.g. "5 hours" */
+						: sprintf( __( 'overdue for %s', 'rmd-backup-wordpress' ), human_time_diff( $next, $now ) )
+				) . '</div>';
+			}
+			printf(
+				'<tr><td>%s</td><td><a href="%s">%s</a>%s</td><td>%s</td><td>%s</td></tr>',
+				$when, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above.
+				esc_url(
+					self::url(
+						[
+							'tab'     => 'profiles',
+							'action'  => 'edit',
+							'profile' => $profile->id,
+						]
+					)
+				),
+				esc_html( $profile->name ),
+				$profile->remote ? ' <span class="rmd-bwp-badge">' . esc_html__( 'SFTP', 'rmd-backup-wordpress' ) . '</span>' : '',
+				esc_html( self::schedule_label( $profile ) ),
+				null === $last ? '–' : sprintf( '<span class="rmd-bwp-badge rmd-bwp-badge-%s">%s</span> %s', esc_attr( (string) $last['status'] ), esc_html( Notifier::status_label( (string) $last['status'] ) ), esc_html( self::date( (int) $last['started'] ) ) )
+			);
+		}
+		echo '</tbody></table>';
 	}
 
 	/**
@@ -512,6 +581,8 @@ final class Page {
 		$settings = Settings::get();
 		$free     = Storage::free_space();
 
+		self::render_setup_steps();
+
 		echo '<table class="form-table" role="presentation"><tbody>';
 		printf(
 			'<tr><th scope="row">%s</th><td><code>%s</code><p class="description">%s</p></td></tr>',
@@ -536,6 +607,8 @@ final class Page {
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 		echo '<input type="hidden" name="action" value="rmd_bwp_save_settings">';
 		wp_nonce_field( 'rmd_bwp_save_settings' );
+		// Enter in a text field submits the first button of the form: make that "save", not "create key pair".
+		echo '<button type="submit" name="rmd_bwp_do" value="save" class="screen-reader-text" tabindex="-1" aria-hidden="true">' . esc_html__( 'Save settings', 'rmd-backup-wordpress' ) . '</button>';
 		echo '<h2>' . esc_html__( 'Archives', 'rmd-backup-wordpress' ) . '</h2>';
 		echo '<table class="form-table" role="presentation"><tbody>';
 		printf(
@@ -581,10 +654,39 @@ final class Page {
 		echo '<table class="form-table" role="presentation"><tbody>';
 		self::text_field( 'notify_email', __( 'Default recipient', 'rmd-backup-wordpress' ), $settings['notify_email'], __( 'Used by profiles without their own recipient. Empty = administration email address.', 'rmd-backup-wordpress' ), 'regular-text', false, (string) get_option( 'admin_email' ), '', 'settings' );
 		echo '</tbody></table>';
-		submit_button( __( 'Save settings', 'rmd-backup-wordpress' ) );
-		echo '</form>';
 
 		self::render_sftp_settings();
+
+		printf(
+			'<p class="submit"><button type="submit" name="rmd_bwp_do" value="save" class="button button-primary">%s</button> <button type="submit" name="rmd_bwp_do" value="test" class="button">%s</button></p>',
+			esc_html__( 'Save settings', 'rmd-backup-wordpress' ),
+			esc_html__( 'Save and test connection', 'rmd-backup-wordpress' )
+		);
+		echo '</form>';
+	}
+
+	/**
+	 * Order of the first setup, shown until encryption is set and, once an SFTP
+	 * user is entered, a connection test stored the host key.
+	 */
+	private static function render_setup_steps(): void {
+		$sftp = SftpSettings::get();
+		if ( '' !== Settings::recipient() && ( '' === $sftp['user'] || '' !== $sftp['fingerprint'] ) ) {
+			return;
+		}
+		echo '<div class="notice notice-info inline rmd-bwp-setup"><p><strong>' . esc_html__( 'Setting up', 'rmd-backup-wordpress' ) . '</strong></p><ol>';
+		foreach (
+			[
+				__( 'Under "Encryption" enter your age public key.', 'rmd-backup-wordpress' ),
+				__( 'Under "Upload to SFTP" enter server and user and click "Create key pair". This also saves everything else on this page.', 'rmd-backup-wordpress' ),
+				__( 'Download the public key and add it to the SFTP account.', 'rmd-backup-wordpress' ),
+				__( 'Click "Save and test connection". This stores the host key of the server.', 'rmd-backup-wordpress' ),
+				__( 'Enable "Upload to SFTP" in the profiles.', 'rmd-backup-wordpress' ),
+			] as $step
+		) {
+			echo '<li>' . esc_html( $step ) . '</li>';
+		}
+		echo '</ol><p>' . esc_html__( 'Without an off-site copy only step 1 is needed.', 'rmd-backup-wordpress' ) . '</p></div>';
 	}
 
 	private static function render_sftp_settings(): void {
@@ -596,9 +698,6 @@ final class Page {
 			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'The stored password can no longer be decrypted (the security keys in wp-config.php changed). Enter it again.', 'rmd-backup-wordpress' ) . '</p></div>';
 		}
 
-		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
-		echo '<input type="hidden" name="action" value="rmd_bwp_save_sftp">';
-		wp_nonce_field( 'rmd_bwp_save_sftp' );
 		echo '<table class="form-table" role="presentation"><tbody>';
 		self::sftp_field( 'host', __( 'Server', 'rmd-backup-wordpress' ), $sftp['host'], 'regular-text code', SftpSettings::DEFAULT_HOST );
 		self::sftp_field( 'port', __( 'Port', 'rmd-backup-wordpress' ), (string) $sftp['port'], 'small-text', '22' );
@@ -630,30 +729,15 @@ final class Page {
 		self::sftp_field( 'path', __( 'Base folder', 'rmd-backup-wordpress' ), $sftp['path'], 'regular-text code', SftpSettings::DEFAULT_PATH, __( 'Folder for the backups of all sites, inside the own folder of the account (HiDrive: /users/<name>/backups). Empty = backups, "." = the own folder itself, a path starting with "/" is used as it is.', 'rmd-backup-wordpress' ) );
 		self::sftp_field( 'folder', __( 'Folder for this site', 'rmd-backup-wordpress' ), $sftp['folder'], 'regular-text code', ArchiveName::site( home_url() ), __( 'Letters, digits, dots, hyphens. Default: the domain of the site.', 'rmd-backup-wordpress' ) );
 		printf(
-			'<tr><th scope="row">%s</th><td>%s<p class="description">%s</p></td></tr>',
+			'<tr><th scope="row">%s</th><td>%s%s<p class="description">%s</p></td></tr>',
 			esc_html__( 'Host key', 'rmd-backup-wordpress' ),
 			'' === $sftp['fingerprint'] ? '<em>' . esc_html__( 'not known yet', 'rmd-backup-wordpress' ) . '</em>' : '<code>' . esc_html( $sftp['fingerprint'] ) . '</code>',
+			'' !== $sftp['fingerprint'] && ! SftpSettings::locked( 'fingerprint' )
+				? ' <button type="submit" name="rmd_bwp_do" value="reset_hostkey" class="button button-link-delete rmd-bwp-confirm" data-confirm="' . esc_attr__( 'Save the settings and forget the host key? The next connection test stores the key the server presents.', 'rmd-backup-wordpress' ) . '">' . esc_html__( 'Reset host key', 'rmd-backup-wordpress' ) . '</button>'
+				: '',
 			esc_html__( 'Stored at the first connection test. Every upload checks that the server still presents this key, so a fake server cannot receive the backups.', 'rmd-backup-wordpress' )
 		);
 		echo '</tbody></table>';
-		submit_button( __( 'Save SFTP settings', 'rmd-backup-wordpress' ), 'secondary' );
-		echo '</form>';
-
-		echo '<p class="rmd-bwp-sftp-actions">';
-		printf(
-			'<form method="post" action="%1$s"><input type="hidden" name="action" value="rmd_bwp_test_sftp">%2$s<button type="submit" class="button">%3$s</button></form> ',
-			esc_url( admin_url( 'admin-post.php' ) ),
-			wp_nonce_field( 'rmd_bwp_test_sftp', '_wpnonce', true, false ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core nonce markup.
-			esc_html__( 'Test connection', 'rmd-backup-wordpress' )
-		);
-		if ( '' !== $sftp['fingerprint'] && ! SftpSettings::locked( 'fingerprint' ) ) {
-			printf(
-				'<a class="button button-link-delete rmd-bwp-confirm" href="%s">%s</a>',
-				esc_url( self::action_url( 'rmd_bwp_reset_hostkey', [] ) ),
-				esc_html__( 'Reset host key', 'rmd-backup-wordpress' )
-			);
-		}
-		echo '</p>';
 	}
 
 	/**
@@ -672,7 +756,7 @@ final class Page {
 				echo '<p>' . esc_html__( 'RMD_BWP_SFTP_PRIVATE_KEY in wp-config.php is not a valid private key.', 'rmd-backup-wordpress' ) . '</p>';
 			} else {
 				echo '<p>' . esc_html__( 'This site has no key pair yet. The private key is created here and never leaves this site; only the public key is added to the account.', 'rmd-backup-wordpress' ) . '</p>';
-				printf( '<p><a class="button" href="%s">%s</a></p>', esc_url( self::action_url( 'rmd_bwp_generate_key', [] ) ), esc_html__( 'Create key pair', 'rmd-backup-wordpress' ) );
+				echo '<p><button type="submit" name="rmd_bwp_do" value="generate_key" class="button">' . esc_html__( 'Create key pair', 'rmd-backup-wordpress' ) . '</button></p>';
 			}
 			echo '</td></tr>';
 			return;
@@ -693,9 +777,8 @@ final class Page {
 		);
 		if ( ! SftpSettings::locked( 'private_key' ) ) {
 			printf(
-				' <a class="button rmd-bwp-confirm" data-confirm="%s" href="%s">%s</a>',
+				' <button type="submit" name="rmd_bwp_do" value="generate_key" class="button rmd-bwp-confirm" data-confirm="%s">%s</button>',
 				esc_attr__( 'Create a new key pair? The current key stops working for this site. Remove its public key from the account afterwards.', 'rmd-backup-wordpress' ),
-				esc_url( self::action_url( 'rmd_bwp_generate_key', [] ) ),
 				esc_html__( 'Create new key pair', 'rmd-backup-wordpress' )
 			);
 		}
@@ -915,9 +998,8 @@ final class Page {
 		}
 
 		$messages = [
-			'sftp_saved'      => __( 'SFTP settings saved. Run "Test connection" to check them.', 'rmd-backup-wordpress' ),
-			'hostkey_reset'   => __( 'Host key reset. The next connection test stores the key the server presents.', 'rmd-backup-wordpress' ),
-			'key_generated'   => __( 'Key pair created. Download the public key, add it to the SFTP account and run "Test connection".', 'rmd-backup-wordpress' ),
+			'hostkey_reset'   => __( 'Settings saved and host key reset. The next connection test stores the key the server presents.', 'rmd-backup-wordpress' ),
+			'key_generated'   => __( 'Settings saved and key pair created. Download the public key, add it to the SFTP account and click "Save and test connection".', 'rmd-backup-wordpress' ),
 			'profile_saved'   => __( 'Profile saved.', 'rmd-backup-wordpress' ),
 			'profile_copied'  => __( 'Profile duplicated.', 'rmd-backup-wordpress' ),
 			'profile_deleted' => __( 'Profile deleted.', 'rmd-backup-wordpress' ),
@@ -1057,50 +1139,57 @@ final class Page {
 		);
 	}
 
+	/**
+	 * Saves the whole settings tab (general and SFTP) in one go, then runs the
+	 * action of the clicked button. Nothing is saved if a value is invalid.
+	 */
 	public static function save_settings(): void {
 		self::guard( 'rmd_bwp_save_settings' );
-		$raw    = isset( $_POST['settings'] ) && is_array( $_POST['settings'] ) ? wp_unslash( $_POST['settings'] ) : []; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.NonceVerification.Missing -- Normalized by Settings::parse(), nonce checked in guard().
-		$errors = Settings::save( $raw );
-		if ( [] !== $errors ) {
-			self::fail( self::error_message( $errors[0] ), 'settings' );
-		}
-		self::redirect(
-			self::url(
-				[
-					'tab'            => 'settings',
-					'rmd_bwp_notice' => 'settings_saved',
-				]
-			)
-		);
-	}
+		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.NonceVerification.Missing -- Normalized by Settings::parse() and SftpSettings::parse(), nonce checked in guard().
+		$raw_settings = isset( $_POST['settings'] ) && is_array( $_POST['settings'] ) ? wp_unslash( $_POST['settings'] ) : [];
+		$raw_sftp     = isset( $_POST['sftp'] ) && is_array( $_POST['sftp'] ) ? wp_unslash( $_POST['sftp'] ) : [];
+		$action       = isset( $_POST['rmd_bwp_do'] ) ? sanitize_key( wp_unslash( $_POST['rmd_bwp_do'] ) ) : 'save';
+		// phpcs:enable
 
-	public static function save_sftp(): void {
-		self::guard( 'rmd_bwp_save_sftp' );
-		$raw    = isset( $_POST['sftp'] ) && is_array( $_POST['sftp'] ) ? wp_unslash( $_POST['sftp'] ) : []; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.NonceVerification.Missing -- Validated by SftpSettings::save(), nonce checked in guard().
-		$errors = SftpSettings::save( $raw );
+		$sftp   = SftpSettings::parse( $raw_sftp );
+		$errors = array_values( array_unique( array_merge( Settings::parse( $raw_settings )['errors'], $sftp['errors'] ) ) );
 		if ( [] !== $errors ) {
-			self::fail( self::error_message( $errors[0] ), 'settings' );
+			self::fail( implode( ' ', array_map( [ self::class, 'error_message' ], $errors ) ), 'settings' );
 		}
-		self::redirect(
-			self::url(
-				[
-					'tab'            => 'settings',
-					'rmd_bwp_notice' => 'sftp_saved',
-				]
-			) . '#sftp'
-		);
+		Settings::save( $raw_settings );
+		SftpSettings::store( $sftp['settings'] );
+
+		match ( $action ) {
+			'test'          => self::test_sftp(),
+			'generate_key'  => self::generate_key(),
+			'reset_hostkey' => self::reset_hostkey(),
+			default         => self::redirect(
+				self::url(
+					[
+						'tab'            => 'settings',
+						'rmd_bwp_notice' => 'settings_saved',
+					]
+				)
+			),
+		};
 	}
 
 	/**
 	 * Connects, checks write access and stores the host key if none is pinned yet.
 	 */
-	public static function test_sftp(): void {
-		self::guard( 'rmd_bwp_test_sftp' );
+	private static function test_sftp(): never {
 		$settings = SftpSettings::get();
 		try {
 			$result = ( new SftpDestination( $settings ) )->test();
 		} catch ( Throwable $e ) {
-			self::fail( wp_specialchars_decode( $e->getMessage(), ENT_QUOTES ), 'settings' );
+			self::fail(
+				sprintf(
+					/* translators: %s: error message */
+					__( 'Settings saved, but the connection test failed: %s', 'rmd-backup-wordpress' ),
+					wp_specialchars_decode( $e->getMessage(), ENT_QUOTES )
+				),
+				'settings'
+			);
 		}
 
 		if ( '' === $settings['fingerprint'] ) {
@@ -1110,7 +1199,7 @@ final class Page {
 			self::ERRORS_TRANSIENT . 'success_' . get_current_user_id(),
 			sprintf(
 				/* translators: 1: folder, 2: number of backups, 3: host key fingerprint */
-				__( 'Connection works. Folder %1$s is writable and contains %2$d backups of this site. Host key: %3$s', 'rmd-backup-wordpress' ),
+				__( 'Settings saved. Connection works. Folder %1$s is writable and contains %2$d backups of this site. Host key: %3$s', 'rmd-backup-wordpress' ),
 				$result['directory'],
 				$result['backups'],
 				$result['fingerprint']
@@ -1120,8 +1209,7 @@ final class Page {
 		self::redirect( self::url( [ 'tab' => 'settings' ] ) . '#sftp' );
 	}
 
-	public static function generate_key(): void {
-		self::guard( 'rmd_bwp_generate_key' );
+	private static function generate_key(): never {
 		if ( SftpSettings::locked( 'private_key' ) ) {
 			self::fail( __( 'The SSH key is set in wp-config.php.', 'rmd-backup-wordpress' ), 'settings' );
 		}
@@ -1140,6 +1228,18 @@ final class Page {
 		);
 	}
 
+	private static function reset_hostkey(): never {
+		SftpSettings::save_fingerprint( '' );
+		self::redirect(
+			self::url(
+				[
+					'tab'            => 'settings',
+					'rmd_bwp_notice' => 'hostkey_reset',
+				]
+			) . '#sftp'
+		);
+	}
+
 	public static function download_pubkey(): void {
 		self::guard( 'rmd_bwp_download_pubkey' );
 		$public = SftpSettings::public_key();
@@ -1152,19 +1252,6 @@ final class Page {
 		header( 'X-Content-Type-Options: nosniff' );
 		echo $public . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Plain-text file download.
 		exit;
-	}
-
-	public static function reset_hostkey(): void {
-		self::guard( 'rmd_bwp_reset_hostkey' );
-		SftpSettings::save_fingerprint( '' );
-		self::redirect(
-			self::url(
-				[
-					'tab'            => 'settings',
-					'rmd_bwp_notice' => 'hostkey_reset',
-				]
-			) . '#sftp'
-		);
 	}
 
 	/**
