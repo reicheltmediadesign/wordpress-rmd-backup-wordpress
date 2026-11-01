@@ -94,7 +94,7 @@ wp rmd-backup run full
 3. **Create an SFTP account** that only reaches its own folder and has no other protocols (HiDrive: an extra user with SFTP only).
 4. Under *Settings → Upload to SFTP* enter server and user, keep **Login: SSH key** and click **Create key pair**. This saves the whole settings page first. The private key is created on the site and never leaves it.
 5. Click **Download public key** (`rmd-backup_<domain>.pub`; the key comment is `rmd-backup <domain>`) and add the file to the account. HiDrive: log in as owner, *Settings → Account →* the backup account *→ Open-SSH → SSH Schlüssel hinterlegen*. An account can hold many keys, one per site.
-6. Click **Save and test connection** (this stores the server's host key) and enable **Upload to SFTP** in the profiles.
+6. Click **Save and test connection** (this stores the server's host key). After the first successful test the plugin offers to enable **Upload to SFTP** for all profiles; with *No* enable it per profile.
 7. HiDrive: once all sites use keys, enable two-factor authentication for the backup account and delete its protocol passwords. Key logins keep working with 2FA; password logins would need the current code and fail in scheduled runs.
 
 To lock out a site (compromised or no longer a customer), delete only its key in the account. Every other site keeps working. **Create new key pair** replaces the key of a site; remove the old public key from the account afterwards.
