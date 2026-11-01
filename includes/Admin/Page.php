@@ -48,6 +48,7 @@ final class Page {
 		add_action( 'admin_post_rmd_bwp_delete_log', [ self::class, 'delete_log' ] );
 		add_action( 'admin_post_rmd_bwp_save_settings', [ self::class, 'save_settings' ] );
 		add_action( 'admin_post_rmd_bwp_download_pubkey', [ self::class, 'download_pubkey' ] );
+		add_action( 'admin_post_rmd_bwp_enable_remote', [ self::class, 'enable_remote' ] );
 		add_filter( 'plugin_action_links_' . RMD_BWP_BASENAME, [ self::class, 'action_links' ] );
 	}
 
@@ -996,6 +997,7 @@ final class Page {
 			delete_transient( self::ERRORS_TRANSIENT . 'success_' . get_current_user_id() );
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $success ) . '</p></div>';
 		}
+		self::render_remote_offer();
 
 		$messages = [
 			'hostkey_reset'   => __( 'Settings saved and host key reset. The next connection test stores the key the server presents.', 'rmd-backup-wordpress' ),
@@ -1006,6 +1008,7 @@ final class Page {
 			'backup_deleted'  => __( 'Backup deleted.', 'rmd-backup-wordpress' ),
 			'log_deleted'     => __( 'Log deleted.', 'rmd-backup-wordpress' ),
 			'settings_saved'  => __( 'Settings saved.', 'rmd-backup-wordpress' ),
+			'remote_enabled'  => __( 'Upload to SFTP enabled for all profiles.', 'rmd-backup-wordpress' ),
 		];
 		if ( isset( $messages[ $notice ] ) ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $messages[ $notice ] ) . '</p></div>';
@@ -1195,6 +1198,9 @@ final class Page {
 		if ( '' === $settings['fingerprint'] ) {
 			SftpSettings::save_fingerprint( $result['fingerprint'] );
 		}
+		if ( '' !== Settings::recipient() && [] !== self::profiles_without_upload() ) {
+			set_transient( self::ERRORS_TRANSIENT . 'offer_remote_' . get_current_user_id(), 1, 5 * MINUTE_IN_SECONDS );
+		}
 		set_transient(
 			self::ERRORS_TRANSIENT . 'success_' . get_current_user_id(),
 			sprintf(
@@ -1237,6 +1243,58 @@ final class Page {
 					'rmd_bwp_notice' => 'hostkey_reset',
 				]
 			) . '#sftp'
+		);
+	}
+
+	/**
+	 * After the first successful connection test: offer to enable the upload
+	 * for every profile that does not upload yet. "No" leaves it to the profiles.
+	 */
+	private static function render_remote_offer(): void {
+		$key = self::ERRORS_TRANSIENT . 'offer_remote_' . get_current_user_id();
+		if ( ! get_transient( $key ) ) {
+			return;
+		}
+		delete_transient( $key );
+		$profiles = self::profiles_without_upload();
+		if ( [] === $profiles ) {
+			return;
+		}
+		printf(
+			'<div class="notice notice-info rmd-bwp-offer"><p><strong>%1$s</strong></p><p>%2$s</p><ul>%3$s</ul><form method="post" action="%4$s"><input type="hidden" name="action" value="rmd_bwp_enable_remote">%5$s<p><button type="submit" class="button button-primary">%6$s</button> <a class="button" href="%7$s">%8$s</a></p></form></div>',
+			esc_html__( 'Upload the backups of all profiles to the SFTP server?', 'rmd-backup-wordpress' ),
+			esc_html__( 'These profiles do not upload yet. With "No" you can enable "Upload to SFTP" per profile later.', 'rmd-backup-wordpress' ),
+			implode( '', array_map( static fn( Profile $profile ): string => '<li>' . esc_html( $profile->name ) . '</li>', $profiles ) ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in the callback.
+			esc_url( admin_url( 'admin-post.php' ) ),
+			wp_nonce_field( 'rmd_bwp_enable_remote', '_wpnonce', true, false ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core nonce markup.
+			esc_html__( 'Yes, enable for all profiles', 'rmd-backup-wordpress' ),
+			esc_url( self::url( [ 'tab' => 'settings' ] ) ),
+			esc_html__( 'No', 'rmd-backup-wordpress' )
+		);
+	}
+
+	/**
+	 * @return list<Profile>
+	 */
+	private static function profiles_without_upload(): array {
+		return array_values( array_filter( Settings::profiles(), static fn( Profile $profile ): bool => ! $profile->remote ) );
+	}
+
+	public static function enable_remote(): void {
+		self::guard( 'rmd_bwp_enable_remote' );
+		if ( '' === Settings::recipient() ) {
+			self::fail( __( 'Uploads to the SFTP server require encryption. Enter an age public key in the settings.', 'rmd-backup-wordpress' ), 'settings' );
+		}
+		foreach ( self::profiles_without_upload() as $profile ) {
+			Settings::save_profile( Profile::parse( [ 'remote' => true ] + $profile->to_array() )['profile'], false );
+		}
+		self::redirect(
+			self::url(
+				[
+					'tab'            => 'profiles',
+					'rmd_bwp_notice' => 'remote_enabled',
+				]
+			)
 		);
 	}
 

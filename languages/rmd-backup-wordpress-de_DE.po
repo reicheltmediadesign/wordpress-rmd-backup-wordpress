@@ -909,3 +909,18 @@ msgstr "Aktiviere „Per SFTP hochladen“ in den Profilen."
 
 msgid "Without an off-site copy only step 1 is needed."
 msgstr "Ohne externe Kopie reicht Schritt 1."
+
+msgid "Upload to SFTP enabled for all profiles."
+msgstr "Upload per SFTP für alle Profile aktiviert."
+
+msgid "Upload the backups of all profiles to the SFTP server?"
+msgstr "Backups aller Profile auf den SFTP-Server hochladen?"
+
+msgid "These profiles do not upload yet. With \"No\" you can enable \"Upload to SFTP\" per profile later."
+msgstr "Diese Profile laden noch nicht hoch. Bei „Nein“ kannst du „Per SFTP hochladen“ später je Profil aktivieren."
+
+msgid "Yes, enable for all profiles"
+msgstr "Ja, für alle Profile aktivieren"
+
+msgid "No"
+msgstr "Nein"

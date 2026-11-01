@@ -5,6 +5,12 @@ All notable changes to this plugin are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.5.1] – 2026-11-01
+
+### Added
+
+- After a successful connection test, the settings tab offers to enable "Upload to SFTP" for all profiles that do not upload yet.
+
 ## [0.5.0] – 2026-10-31
 
 ### Added
