@@ -17,6 +17,7 @@ use RMD\BackupWordpress\Destination\SftpDestination;
 use RMD\BackupWordpress\Destination\SftpSettings;
 use RMD\BackupWordpress\Domain\ArchiveName;
 use RMD\BackupWordpress\Domain\Profile;
+use RMD\BackupWordpress\Domain\Schedule;
 use RMD\BackupWordpress\Domain\SshKey;
 use RMD\BackupWordpress\Log\LogStore;
 use RMD\BackupWordpress\Notifier;
@@ -34,6 +35,9 @@ final class Page {
 
 	private const ERRORS_TRANSIENT = 'rmd_bwp_form_errors_';
 
+	/** Schedules offered for the full backup after the SFTP setup. */
+	private const OFFERED_SCHEDULES = [ 'daily', 'weekly', 'monthly' ];
+
 	/** Larger logs are shown from the end. */
 	private const LOG_VIEW_BYTES = 2 * 1024 * 1024;
 
@@ -49,6 +53,7 @@ final class Page {
 		add_action( 'admin_post_rmd_bwp_save_settings', [ self::class, 'save_settings' ] );
 		add_action( 'admin_post_rmd_bwp_download_pubkey', [ self::class, 'download_pubkey' ] );
 		add_action( 'admin_post_rmd_bwp_enable_remote', [ self::class, 'enable_remote' ] );
+		add_action( 'admin_post_rmd_bwp_schedule_full', [ self::class, 'schedule_full' ] );
 		add_filter( 'plugin_action_links_' . RMD_BWP_BASENAME, [ self::class, 'action_links' ] );
 	}
 
@@ -997,7 +1002,10 @@ final class Page {
 			delete_transient( self::ERRORS_TRANSIENT . 'success_' . get_current_user_id() );
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $success ) . '</p></div>';
 		}
-		self::render_remote_offer();
+		// One question at a time: the schedule offer follows once the upload offer is answered.
+		if ( ! self::render_remote_offer() ) {
+			self::render_schedule_offer();
+		}
 
 		$messages = [
 			'hostkey_reset'   => __( 'Settings saved and host key reset. The next connection test stores the key the server presents.', 'rmd-backup-wordpress' ),
@@ -1201,6 +1209,9 @@ final class Page {
 		if ( '' !== Settings::recipient() && [] !== self::profiles_without_upload() ) {
 			set_transient( self::ERRORS_TRANSIENT . 'offer_remote_' . get_current_user_id(), 1, 5 * MINUTE_IN_SECONDS );
 		}
+		if ( null !== self::unscheduled_full_profile() ) {
+			set_transient( self::ERRORS_TRANSIENT . 'offer_schedule_' . get_current_user_id(), 1, 15 * MINUTE_IN_SECONDS );
+		}
 		set_transient(
 			self::ERRORS_TRANSIENT . 'success_' . get_current_user_id(),
 			sprintf(
@@ -1250,15 +1261,15 @@ final class Page {
 	 * After the first successful connection test: offer to enable the upload
 	 * for every profile that does not upload yet. "No" leaves it to the profiles.
 	 */
-	private static function render_remote_offer(): void {
+	private static function render_remote_offer(): bool {
 		$key = self::ERRORS_TRANSIENT . 'offer_remote_' . get_current_user_id();
 		if ( ! get_transient( $key ) ) {
-			return;
+			return false;
 		}
 		delete_transient( $key );
 		$profiles = self::profiles_without_upload();
 		if ( [] === $profiles ) {
-			return;
+			return false;
 		}
 		printf(
 			'<div class="notice notice-info rmd-bwp-offer"><p><strong>%1$s</strong></p><p>%2$s</p><ul>%3$s</ul><form method="post" action="%4$s"><input type="hidden" name="action" value="rmd_bwp_enable_remote">%5$s<p><button type="submit" class="button button-primary">%6$s</button> <a class="button" href="%7$s">%8$s</a></p></form></div>',
@@ -1271,6 +1282,106 @@ final class Page {
 			esc_url( self::url( [ 'tab' => 'settings' ] ) ),
 			esc_html__( 'No', 'rmd-backup-wordpress' )
 		);
+		return true;
+	}
+
+	/**
+	 * After the upload offer: offer to run the full backup on a schedule. The
+	 * start time is picked at random, so sites sharing one SFTP server do not
+	 * all upload at the same moment.
+	 */
+	private static function render_schedule_offer(): void {
+		$key = self::ERRORS_TRANSIENT . 'offer_schedule_' . get_current_user_id();
+		if ( ! get_transient( $key ) ) {
+			return;
+		}
+		delete_transient( $key );
+		$profile = self::unscheduled_full_profile();
+		if ( null === $profile ) {
+			return;
+		}
+
+		$options = '';
+		foreach ( array_intersect_key( self::schedule_labels(), array_flip( self::OFFERED_SCHEDULES ) ) as $value => $label ) {
+			$options .= sprintf( '<option value="%s"%s>%s</option>', esc_attr( $value ), selected( $value, 'monthly', false ), esc_html( $label ) );
+		}
+
+		printf(
+			'<div class="notice notice-info rmd-bwp-offer"><p><strong>%1$s</strong></p><p>%2$s</p><form method="post" action="%3$s"><input type="hidden" name="action" value="rmd_bwp_schedule_full">%4$s<p><label for="rmd-bwp-offer-schedule">%5$s</label> <select id="rmd-bwp-offer-schedule" name="schedule">%6$s</select></p><p><button type="submit" class="button button-primary">%7$s</button> <a class="button" href="%8$s">%9$s</a></p></form></div>',
+			esc_html(
+				sprintf(
+					/* translators: %s: profile name */
+					__( 'Run the profile "%s" on a schedule?', 'rmd-backup-wordpress' ),
+					$profile->name
+				)
+			),
+			esc_html(
+				sprintf(
+					/* translators: 1: time, 2: time */
+					__( 'The start time is picked at random between %1$s and %2$s, so that sites sharing one SFTP server do not all back up at the same moment. With "No" the profile stays manual; you can set a schedule in the profile later.', 'rmd-backup-wordpress' ),
+					Schedule::spread_time( 0 ),
+					sprintf( '%02d:00', Schedule::SPREAD_FROM_HOUR + intdiv( Schedule::SPREAD_MINUTES, 60 ) )
+				)
+			),
+			esc_url( admin_url( 'admin-post.php' ) ),
+			wp_nonce_field( 'rmd_bwp_schedule_full', '_wpnonce', true, false ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core nonce markup.
+			esc_html__( 'Schedule', 'rmd-backup-wordpress' ),
+			$options, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above.
+			esc_html__( 'Yes, schedule', 'rmd-backup-wordpress' ),
+			esc_url( self::url( [ 'tab' => 'settings' ] ) ),
+			esc_html__( 'No', 'rmd-backup-wordpress' )
+		);
+	}
+
+	/**
+	 * The profile that backs up everything (preset "full", otherwise the first
+	 * one with all parts), if it only runs manually so far.
+	 */
+	private static function unscheduled_full_profile(): ?Profile {
+		$profiles = Settings::profiles();
+		$full     = $profiles['full'] ?? null;
+		if ( null === $full ) {
+			foreach ( $profiles as $profile ) {
+				if ( [] === array_diff( Profile::PARTS, $profile->parts ) ) {
+					$full = $profile;
+					break;
+				}
+			}
+		}
+		return null !== $full && ! $full->is_scheduled() ? $full : null;
+	}
+
+	public static function schedule_full(): void {
+		self::guard( 'rmd_bwp_schedule_full' );
+		$profile = self::unscheduled_full_profile();
+		if ( null === $profile ) {
+			self::fail( __( 'There is no full backup profile without a schedule.', 'rmd-backup-wordpress' ), 'profiles' );
+		}
+
+		$schedule = isset( $_POST['schedule'] ) ? sanitize_key( wp_unslash( $_POST['schedule'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Checked in guard().
+		if ( ! in_array( $schedule, self::OFFERED_SCHEDULES, true ) ) {
+			$schedule = 'monthly';
+		}
+
+		$profile = Profile::parse(
+			[
+				'schedule' => $schedule,
+				'time'     => Schedule::spread_time( wp_rand( 0, Schedule::SPREAD_MINUTES - 1 ) ),
+			] + $profile->to_array()
+		)['profile'];
+		Runner::sync( Settings::save_profile( $profile, false ) );
+
+		set_transient(
+			self::ERRORS_TRANSIENT . 'success_' . get_current_user_id(),
+			sprintf(
+				/* translators: 1: profile name, 2: schedule, e.g. "Monthly on day 1 at 02:37" */
+				__( 'Schedule set for "%1$s": %2$s.', 'rmd-backup-wordpress' ),
+				$profile->name,
+				self::schedule_label( $profile )
+			),
+			MINUTE_IN_SECONDS
+		);
+		self::redirect( self::url() );
 	}
 
 	/**

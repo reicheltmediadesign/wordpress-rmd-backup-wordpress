@@ -13,6 +13,22 @@ use DateTimeImmutable;
 
 final class Schedule {
 
+	/** Window for start times picked at random: 02:00 up to (not including) 04:00. */
+	public const SPREAD_FROM_HOUR = 2;
+	public const SPREAD_MINUTES   = 120;
+
+	/**
+	 * Start time inside the window. Callers pass a random offset, so sites that
+	 * share one backup server do not all start at the same minute.
+	 *
+	 * @param int $offset Minutes after the start of the window; wraps around.
+	 * @return string HH:MM
+	 */
+	public static function spread_time( int $offset ): string {
+		$minutes = self::SPREAD_FROM_HOUR * 60 + ( ( $offset % self::SPREAD_MINUTES ) + self::SPREAD_MINUTES ) % self::SPREAD_MINUTES;
+		return sprintf( '%02d:%02d', intdiv( $minutes, 60 ), $minutes % 60 );
+	}
+
 	/**
 	 * First run strictly after $after, or null for manual profiles.
 	 *

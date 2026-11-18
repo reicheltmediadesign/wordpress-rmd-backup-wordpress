@@ -5,6 +5,12 @@ All notable changes to this plugin are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.5.2] – 2026-11-18
+
+### Added
+
+- After a successful connection test (and the question about the upload), the plugin offers to run the full backup on a schedule: daily, weekly or monthly (default). The start time is picked at random between 02:00 and 04:00, so that sites sharing one SFTP server do not all back up at the same moment.
+
 ## [0.5.1] – 2026-11-01
 
 ### Added
