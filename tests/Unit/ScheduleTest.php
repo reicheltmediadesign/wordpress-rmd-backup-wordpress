@@ -55,4 +55,17 @@ final class ScheduleTest extends TestCase {
 		self::assertSame( '2027-01-15 03:00', self::next( 'monthly', '2026-12-15 03:00', '03:00', 1, 15 ) );
 		self::assertSame( '2027-02-28 03:00', self::next( 'monthly', '2027-01-31 10:00', '03:00', 1, 28 ) );
 	}
+
+	public function test_spread_time_stays_inside_the_window(): void {
+		self::assertSame( '02:00', Schedule::spread_time( 0 ) );
+		self::assertSame( '02:37', Schedule::spread_time( 37 ) );
+		self::assertSame( '03:00', Schedule::spread_time( 60 ) );
+		self::assertSame( '03:59', Schedule::spread_time( 119 ) );
+		self::assertSame( '02:00', Schedule::spread_time( 120 ) );
+		self::assertSame( '03:59', Schedule::spread_time( -1 ) );
+
+		for ( $offset = 0; $offset < Schedule::SPREAD_MINUTES; $offset++ ) {
+			self::assertMatchesRegularExpression( '/^0[23]:[0-5][0-9]$/', Schedule::spread_time( $offset ) );
+		}
+	}
 }

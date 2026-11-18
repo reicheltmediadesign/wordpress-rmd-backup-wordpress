@@ -924,3 +924,18 @@ msgstr "Ja, für alle Profile aktivieren"
 
 msgid "No"
 msgstr "Nein"
+
+msgid "Run the profile \"%s\" on a schedule?"
+msgstr "Profil „%s“ zeitgesteuert ausführen?"
+
+msgid "The start time is picked at random between %1$s and %2$s, so that sites sharing one SFTP server do not all back up at the same moment. With \"No\" the profile stays manual; you can set a schedule in the profile later."
+msgstr "Die Startzeit wird zufällig zwischen %1$s und %2$s Uhr gewählt, damit Websites, die sich einen SFTP-Server teilen, nicht alle gleichzeitig sichern. Bei „Nein“ bleibt das Profil manuell; einen Zeitplan kannst du später im Profil einstellen."
+
+msgid "Yes, schedule"
+msgstr "Ja, einplanen"
+
+msgid "There is no full backup profile without a schedule."
+msgstr "Es gibt kein Komplett-Backup-Profil ohne Zeitplan."
+
+msgid "Schedule set for \"%1$s\": %2$s."
+msgstr "Zeitplan für „%1$s“ eingestellt: %2$s."
